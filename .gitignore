@@ -1,0 +1,15 @@
+*~
+.*
+*.cmake
+*.o
+CMakeFiles
+CMakeCache.txt
+release/
+Release/
+debug/
+profile/
+fuzzing/
+install_manifest.txt
+peda-session-*
+Makefile
+*.idea*
