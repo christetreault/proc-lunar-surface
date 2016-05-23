@@ -10,6 +10,11 @@ LandscapeGrid::LandscapeGrid(unsigned int seed)
   //TODO : create 9 tiles
 }
 
+float & LandscapeGrid::get(size_t x, size_t y)
+{
+  // TODO: math
+}
+
 // ---------------------------------------------------------
 // Landscape -----------------------------------------------
 // ---------------------------------------------------------
@@ -57,12 +62,41 @@ Buildable::Buildable(float inElevation, size_t size, RNG & rng)
 // LandscapePatch ------------------------------------------
 // ---------------------------------------------------------
 
-void LandscapePatch::regenerate(std::shared_ptr<Landscape> target)
+void LandscapePatch::regenerate(std::function<float&(size_t,size_t)> get,
+                                size_t size)
 {
   std::vector<glm::vec3> verts;
   std::vector<GLuint> idxs;
   std::vector<glm::vec3> normals;
   std::vector<glm::vec2> texCoords;
+
+  auto spacing = 1.0f / ((float) size);
+
+  for (size_t y = 0; y < size; ++y)
+    {
+      for (size_t x = 0; x < size; ++x)
+        {
+          verts.push_back(glm::vec3(x * spacing,
+                                    y * spacing,
+                                    get(x, y)));
+        }
+    }
+
+  // based on example at: http://www.learnopengles.com/tag/height-maps/
+  for (GLuint y = 0; y < size; ++y)
+    {
+      if (y > 0) idxs.push_back(y * size);
+      for (GLuint x = 0; x < size; ++x)
+        {
+          idxs.push_back((y * size) + x);
+          idxs.push_back(((y + 1) * size) + x);
+        }
+      if (y < size - 1)
+        {
+          idxs.push_back(((y + 1) * size) + (size - 1));
+        }
+    }
+
 }
 
 LandscapePatch::LandscapePatch()

@@ -16,11 +16,14 @@ class LandscapeGrid : public Group
 {
 public:
   LandscapeGrid(unsigned int seed);
+  float & get(size_t x, size_t y);
+  size_t size;
 private:
   RNG rng;
+
 };
 
-class Landscape : public Group
+class Landscape
 {
 public:
   virtual float & get(size_t x, size_t y) = 0;
@@ -57,7 +60,8 @@ private:
 class LandscapePatch : public Drawable
 {
   LandscapePatch();
-  void regenerate(std::shared_ptr<Landscape> target);
+  void regenerate(std::function<float &(size_t, size_t)> get,
+                  size_t size);
   bool isValid() { return valid; }
 private:
   bool valid;
