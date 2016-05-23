@@ -7,7 +7,7 @@
 class City : public Group /* or whatever else sort of Node suits you */
 {
 public:
-  City(RNG & rng /* TODO: other params */);
+  City(unsigned int seed/* TODO: other params */);
 private:
 };
 

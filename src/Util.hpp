@@ -17,7 +17,9 @@ class RNG
 public:
   RNG(unsigned int seed, float min, float max);
   float next();
+  unsigned int getSeed() { return seed; }
 private:
+  unsigned int seed;
   std::mt19937_64 engine;
   std::uniform_real_distribution<float> dist;
 };

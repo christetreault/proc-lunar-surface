@@ -7,6 +7,7 @@
 
 layout (location = 0) in vec3 positionToVert;
 layout (location = 1) in vec3 normalToVert;
+layout (location = 2) in vec2 texCoordToVert;
 
 uniform mat4 PV;
 uniform mat4 M;

@@ -55,6 +55,13 @@ OBJObject::OBJObject(const char * filepath)
                         sizeof(Vertex),
                         (GLvoid *) offsetof(Vertex, normal));
 
+  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(2, 2,
+                        GL_FLOAT,
+                        GL_FALSE,
+                        sizeof(Vertex),
+                        (GLvoid *) offsetof(Vertex, texCoord));
+
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   unbind();
@@ -159,7 +166,7 @@ void OBJObject::parse(const char *filepath)
   for (size_t i = 0; i < verts.size(); ++i)
     {
       auto vertPrime = (verts[i] - avg) / largestDiff;
-      vertices.push_back({vertPrime, norms[i]});
+      vertices.push_back({vertPrime, norms[i], glm::vec2(0.0f, 0.0f)});
       if (vertPrime.x > 1.0f || vertPrime.y > 1.0f || vertPrime.z > 1.0f
           || vertPrime.x < -1.0f || vertPrime.y < -1.0f || vertPrime.z < -1.0f)
         {

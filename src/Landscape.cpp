@@ -48,7 +48,23 @@ float & Natural::get(size_t x, size_t y)
 // ---------------------------------------------------------
 
 Buildable::Buildable(float inElevation, size_t size, RNG & rng)
-  : city(rng)
+  : city(rng.getSeed())
 {
   elevation = inElevation;
 }
+
+// ---------------------------------------------------------
+// LandscapePatch ------------------------------------------
+// ---------------------------------------------------------
+
+void LandscapePatch::regenerate(std::shared_ptr<Landscape> target)
+{
+  std::vector<glm::vec3> verts;
+  std::vector<GLuint> idxs;
+  std::vector<glm::vec3> normals;
+  std::vector<glm::vec2> texCoords;
+}
+
+LandscapePatch::LandscapePatch()
+  : valid(false), VAO(0), VBO(0), EBO(0)
+{}

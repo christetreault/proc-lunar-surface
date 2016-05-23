@@ -10,6 +10,7 @@
 class Landscape;
 class Natural;
 class Buildable;
+class LandscapePatch;
 
 class LandscapeGrid : public Group
 {
@@ -51,6 +52,18 @@ public:
 
 private:
     float elevation;
+};
+
+class LandscapePatch : public Drawable
+{
+  LandscapePatch();
+  void regenerate(std::shared_ptr<Landscape> target);
+  bool isValid() { return valid; }
+private:
+  bool valid;
+  GLuint VAO;
+  GLuint VBO;
+  GLuint EBO;
 };
 
 #endif
