@@ -13,3 +13,5 @@ install_manifest.txt
 peda-session-*
 Makefile
 *.idea*
+/Makefile
+/final

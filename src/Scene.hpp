@@ -2,6 +2,7 @@
 #define SCENE_H
 
 #include "SceneGraph.hpp"
+#include "Landscape.hpp"
 #include "Light.hpp"
 #include "SkyBox.hpp"
 #include <memory>
