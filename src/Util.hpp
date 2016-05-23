@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <glm/glm.hpp>
+#include <random>
 
 // maps a value s in the range of sMin-sMax into the range of tMin-tMax
 float mapRange(float s, float sMin, float sMax,
@@ -10,5 +11,15 @@ float mapRange(float s, float sMin, float sMax,
 // the trackball mapping function used in pa2-4
 glm::vec3 trackBallMapping(float fwidth, float fheight,
                            float xPrime, float yPrime);
+
+class RNG
+{
+public:
+  RNG(unsigned int seed, float min, float max);
+  float next();
+private:
+  std::mt19937_64 engine;
+  std::uniform_real_distribution<float> dist;
+};
 
 #endif

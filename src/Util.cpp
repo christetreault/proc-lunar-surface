@@ -27,3 +27,12 @@ float mapRange(float s, float sMin, float sMax,
 {
   return tMin + (((s - sMin) * (tMax - tMin)) / (sMax - sMin));
 }
+
+RNG::RNG(unsigned int seed, float min, float max)
+  : engine(seed), dist(min, max)
+{}
+
+float RNG::next()
+{
+  return dist(engine);
+}
