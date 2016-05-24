@@ -36,3 +36,12 @@ float RNG::next()
 {
   return dist(engine);
 }
+
+IntRNG::IntRNG(unsigned int inSeed, int min, int max)
+  : seed(inSeed), engine(seed), dist(min, max)
+{}
+
+int IntRNG::next()
+{
+  return dist(engine);
+}

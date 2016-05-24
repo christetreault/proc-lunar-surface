@@ -24,4 +24,16 @@ private:
   std::uniform_real_distribution<float> dist;
 };
 
+class IntRNG
+{
+public:
+  IntRNG(unsigned int seed, int min, int max);
+  int next();
+  unsigned int getSeed() { return seed; }
+private:
+  unsigned int seed;
+  std::mt19937_64 engine;
+  std::uniform_int_distribution<int> dist;
+};
+
 #endif

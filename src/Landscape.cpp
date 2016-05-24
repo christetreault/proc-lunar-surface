@@ -1,29 +1,29 @@
 #include "Landscape.hpp"
 
 // ---------------------------------------------------------
-// LandscapeGrid -------------------------------------------
+// Landscape -----------------------------------------------
 // ---------------------------------------------------------
 
-LandscapeGrid::LandscapeGrid(unsigned int seed)
-  : rng(seed, -1.0f, 1.0f)
-{
-  //TODO : create 9 tiles
-}
+// ---------------------------------------------------------
+// LandscapeBuilder ----------------------------------------
+// ---------------------------------------------------------
 
-float & LandscapeGrid::get(size_t x, size_t y)
+
+
+// ---------------------------------------------------------
+// HeightMap -----------------------------------------------
+// ---------------------------------------------------------
+
+float & HeightMap::get(size_t x, size_t y)
 {
   // TODO: math
 }
 
 // ---------------------------------------------------------
-// Landscape -----------------------------------------------
-// ---------------------------------------------------------
-
-// ---------------------------------------------------------
 // Natural -------------------------------------------------
 // ---------------------------------------------------------
 
-Natural::Natural(RNG & rng,
+Natural::Natural(int seed,
                  size_t size,
                  float topLeft,
                  float topRight,
@@ -39,29 +39,35 @@ Natural::Natural(RNG & rng,
   get(size - 1, 0) = topRight;
   get(0, size - 1) = bottomLeft;
   get(size - 1, size - 1) = bottomRight;
-
-  // TODO: spin up some doodads
-}
-
-float & Natural::get(size_t x, size_t y)
-{
-  // TODO: math
 }
 
 // ---------------------------------------------------------
 // Buildable -----------------------------------------------
 // ---------------------------------------------------------
 
-Buildable::Buildable(float inElevation, size_t size, RNG & rng)
-  : city(rng.getSeed())
+Buildable::Buildable(float inElevation, size_t inSize)
 {
   elevation = inElevation;
+  size = inSize;
 }
+
+// ---------------------------------------------------------
+// RealData ------------------------------------------------
+// ---------------------------------------------------------
+
+RealData::RealData(const char * ppm)
+{
+  // TODO: read ppm
+}
+
+
+
+
 
 // ---------------------------------------------------------
 // LandscapePatch ------------------------------------------
 // ---------------------------------------------------------
-
+/*
 void LandscapePatch::regenerate(std::function<float&(size_t,size_t)> get,
                                 size_t size)
 {
@@ -102,3 +108,4 @@ void LandscapePatch::regenerate(std::function<float&(size_t,size_t)> get,
 LandscapePatch::LandscapePatch()
   : valid(false), VAO(0), VBO(0), EBO(0)
 {}
+*/

@@ -2,38 +2,69 @@
 #define LANDSCAPE_H
 
 #include <glm/glm.hpp>
+#include <memory>
 #include "SceneGraph.hpp"
 #include "Util.hpp"
 #include "City.hpp"
 #include "Doodad.hpp"
+#include "Texture.hpp"
 
-class Landscape;
+class HeightMap;
 class Natural;
 class Buildable;
-class LandscapePatch;
+class LandscapeBuilder;
+class LandscapeModel;
 
-class LandscapeGrid : public Group
+
+class Landscape : public Group
+{
+  Landscape(std::vector<std::pair<glm::mat4,
+                                  std::shared_ptr<Doodad>>> doodads,
+            std::shared_ptr<City> city,
+            std::shared_ptr<LandscapeModel> model);
+};
+
+class LandscapeModel : public Drawable
 {
 public:
-  LandscapeGrid(unsigned int seed);
-  float & get(size_t x, size_t y);
-  size_t size;
+
 private:
-  RNG rng;
-
+  GLuint VAO;
+  GLuint VBO;
+  GLuint EBO;
 };
 
-class Landscape
+
+class LandscapeBuilder
+{
+  LandscapeBuilder(int seed);
+  LandscapeBuilder(const char * ppm);
+
+  void permute(int newSeed);
+  std::shared_ptr<Landscape> finalize();
+private:
+  RNG floatGen;
+  IntRNG intGen;
+
+  std::shared_ptr<Doodad> genDoodad();
+  std::shared_ptr<City> genCity();
+  std::shared_ptr<LandscapeModel> genLandscapeModel();
+
+  std::vector<HeightMap> genHeightmaps();
+  std::vector<HeightMap> genHeightmaps(const char * ppm);
+};
+
+class HeightMap
 {
 public:
-  virtual float & get(size_t x, size_t y) = 0;
+  virtual float & get(size_t x, size_t y);
   size_t size;
 };
 
-class Natural : public Landscape
+class Natural : public HeightMap
 {
 public:
-  Natural(RNG & rng,
+  Natural(int seed,
           size_t size,
           float topLeft,
           float topRight,
@@ -44,30 +75,22 @@ private:
   std::vector<float> elevations;
 };
 
-class Buildable : public Landscape
+class Buildable : public HeightMap
 {
 public:
-  Buildable(float elevation, size_t size, RNG & rng);
-
-  float & get(size_t, size_t) { return elevation; }
-
-  City city;
-
+  Buildable(float elevation, size_t size);
+  virtual float & get(size_t, size_t) { return elevation; }
 private:
-    float elevation;
+  float elevation;
 };
 
-class LandscapePatch : public Drawable
+class RealData : public HeightMap
 {
-  LandscapePatch();
-  void regenerate(std::function<float &(size_t, size_t)> get,
-                  size_t size);
-  bool isValid() { return valid; }
+public:
+  RealData(const char * ppm);
+  virtual float & get(size_t x, size_t y);
 private:
-  bool valid;
-  GLuint VAO;
-  GLuint VBO;
-  GLuint EBO;
+  std::vector<float> pixels;
 };
 
 #endif
