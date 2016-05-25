@@ -35,11 +35,42 @@ static std::shared_ptr<Transform> makeSky()
   return std::make_shared<Transform>(skyBox, skyBoxScaleMat);
 }
 
+static std::shared_ptr<Transform> makeGround()
+{
+  size_t cols = 1;
+  size_t width = glm::pow(2, 5) + 1;
+  std::vector<float> heights;
+
+  for (size_t y = 0; y < width; ++y)
+    {
+      for (size_t x = 0; x < width; ++x)
+        {
+          std::cerr << "init = " << ((float)(y * width) + x)
+            + (cos((float)(y * width) + x)) << std::endl;
+          float val = mapRange(((float)(y * width) + x)
+                               + 2.0f *(cos((float)(y * width) + x)),
+                               0.0f, (((float)(width) * (width)) - 1.0f)
+                                     + 2.0f * cos(((float)(width) * (width)) - 1.0f),
+                               0, 1);
+          std::cerr << "val = " << val <<std::endl;
+
+          heights.push_back(val);
+        }
+    }
+
+  auto patch = std::make_shared<LandscapeModel>(heights, cols, width);
+  return std::make_shared<Transform>(patch,
+                                     glm::rotate(glm::mat4(),
+                                                 glm::pi<float>(),
+                                                 glm::vec3(0.0f, 1.0f, 0.0f)));
+}
+
 std::shared_ptr<Group> getScene(std::shared_ptr<Camera> withCamera)
 {
   auto root = std::make_shared<Group>();
 
   root->insert(makeSky());
+  root->insert(makeGround());
   root->insert(withCamera);
   root->insert(std::make_shared<DirLight>(glm::vec3(0.0f, -5.0f, -25.0f),
                                           glm::vec3(1.0f, 1.0f, 1.0f)));
@@ -91,6 +122,30 @@ DrawFn getDrawFn (const glm::mat4 & P)
           glDepthMask(GL_TRUE);
           model->shader->unbind();
           model->unbind();
+        }
+      else if (typeid(*modelbase) == typeid(LandscapeModel))
+        {
+          auto model = std::dynamic_pointer_cast<LandscapeModel>(modelbase);
+          auto uniformFn = [=](GLuint shaderProg)
+            {
+              auto M = modelM;
+              auto PV = P * camera->getV(cameraM);
+
+              // vertex shader uniforms
+
+              GLuint PVID = glGetUniformLocation(shaderProg, "PV");
+              glUniformMatrix4fv(PVID, 1, GL_FALSE, &PV[0][0]);
+
+              GLuint MID = glGetUniformLocation(shaderProg, "M");
+              glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
+
+              // fragment shader uniforms
+
+            };
+
+          model->shader->bind(uniformFn);
+          model->draw();
+          model->shader->unbind();
         }
       else if (typeid(*modelbase) == typeid(OBJDrawable))
         {

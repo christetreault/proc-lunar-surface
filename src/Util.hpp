@@ -12,6 +12,13 @@ float mapRange(float s, float sMin, float sMax,
 glm::vec3 trackBallMapping(float fwidth, float fheight,
                            float xPrime, float yPrime);
 
+// index into a vector as if it were a 2d array
+template<typename T>
+T & index(std::vector<T> vec, size_t width, size_t x, size_t y)
+{
+  return vec[(y * width) + x];
+}
+
 class RNG
 {
 public:
