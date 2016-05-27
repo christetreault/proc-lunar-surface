@@ -6,7 +6,6 @@
 #include "Light.hpp"
 #include "SkyBox.hpp"
 #include <memory>
-#include <glm/gtx/vector_angle.hpp>
 #include <glm/glm.hpp>
 
 // top level code to build a scene graph. Not strictly needed,

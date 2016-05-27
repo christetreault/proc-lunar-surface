@@ -45,36 +45,31 @@ private:
 class HeightMap
 {
 public:
-  virtual float & get(size_t x, size_t y);
+  HeightMap(unsigned int seed,
+            size_t n,
+            float topLeft,
+            float topRight,
+            float bottomLeft,
+            float bottomRight);
+  HeightMap(const char * ppm);
+
   size_t width;
-protected:
   std::vector<float> elevations;
-};
-
-class Natural : public HeightMap
-{
-public:
-  Natural(int seed,
-          size_t size,
-          float topLeft,
-          float topRight,
-          float bottomLeft,
-          float bottomRight);
-};
-
-class Buildable : public HeightMap
-{
-public:
-  Buildable(float elevation, size_t size);
-  float & get(size_t, size_t) { return elevation; }
 private:
-  float elevation;
-};
+  void diamondSquare(size_t n,
+                     float range,
+                     unsigned int seed,
+                     glm::ivec2 tl,
+                     glm::ivec2 tr,
+                     glm::ivec2 bl,
+                     glm::ivec2 br);
 
-class RealData : public HeightMap
-{
-public:
-  RealData(const char * ppm);
+  void safeSquareStep(glm::ivec2 target,
+                      glm::ivec2 l,
+                      glm::ivec2 u,
+                      glm::ivec2 r,
+                      glm::ivec2 d,
+                      float randVal);
 };
 
 class LandscapeModel : public Drawable

@@ -2,12 +2,12 @@
 
 std::shared_ptr<SkyBox> skyBox;
 
-const char * rightPath = "res/sahara_rt.tga";
-const char * leftPath = "res/sahara_lf.tga";
-const char * topPath = "res/sahara_up.tga";
-const char * bottomPath = "res/sahara_dn.tga";
-const char * backPath = "res/sahara_bk.tga";
-const char * frontPath = "res/sahara_ft.tga";
+const char * rightPath = "res/sky/bkg2_right1.png";
+const char * leftPath = "res/sky/bkg2_left2.png";
+const char * topPath = "res/sky/bkg2_top3.png";
+const char * bottomPath = "res/sky/bkg2_bottom4.png";
+const char * backPath = "res/sky/bkg2_back6.png";
+const char * frontPath = "res/sky/bkg2_front5.png";
 
 const char * vertPath = "shader/shader.vert";
 const char * sbVertPath = "shader/sbshader.vert";
@@ -29,8 +29,8 @@ static std::shared_ptr<Transform> makeSky()
                                     leftPath,
                                     topPath,
                                     bottomPath,
-                                    backPath,
-                                    frontPath);
+                                    frontPath,
+                                    backPath);
 
   return std::make_shared<Transform>(skyBox, skyBoxScaleMat);
 }
@@ -38,31 +38,27 @@ static std::shared_ptr<Transform> makeSky()
 static std::shared_ptr<Transform> makeGround()
 {
   size_t cols = 1;
-  size_t width = glm::pow(2, 5) + 1;
-  std::vector<float> heights;
+  size_t n = 5;
+  auto seed = getRandomSeed();
 
-  for (size_t y = 0; y < width; ++y)
-    {
-      for (size_t x = 0; x < width; ++x)
-        {
-          std::cerr << "init = " << ((float)(y * width) + x)
-            + (cos((float)(y * width) + x)) << std::endl;
-          float val = mapRange(((float)(y * width) + x)
-                               + 2.0f *(cos((float)(y * width) + x)),
-                               0.0f, (((float)(width) * (width)) - 1.0f)
-                                     + 2.0f * cos(((float)(width) * (width)) - 1.0f),
-                               0, 1);
-          std::cerr << "val = " << val <<std::endl;
+  std::cerr << "Seed used: " << seed << std::endl;
 
-          heights.push_back(val);
-        }
-    }
+  HeightMap hm(seed, n, 0.0f, 0.0f, 0.0f, 0.0f);
 
-  auto patch = std::make_shared<LandscapeModel>(heights, cols, width);
-  return std::make_shared<Transform>(patch,
-                                     glm::rotate(glm::mat4(),
-                                                 glm::pi<float>(),
-                                                 glm::vec3(0.0f, 1.0f, 0.0f)));
+  // for (const auto & curr : hm.elevations)
+  //   {
+  //     std::cerr << curr << std::endl;
+  //   }
+
+  auto hmm = std::make_shared<LandscapeModel>(hm.elevations,
+                                              cols,
+                                              hm.width);
+
+  return std::make_shared<Transform>(hmm,
+                                     glm::scale(glm::mat4(),
+                                                glm::vec3(4.0f,
+                                                          4.0f,
+                                                          4.0f)));
 }
 
 std::shared_ptr<Group> getScene(std::shared_ptr<Camera> withCamera)

@@ -3,6 +3,8 @@
 
 #include <glm/glm.hpp>
 #include <random>
+#include <limits>
+#include <ctime>
 
 // maps a value s in the range of sMin-sMax into the range of tMin-tMax
 float mapRange(float s, float sMin, float sMax,
@@ -17,6 +19,27 @@ template<typename T>
 T & index(std::vector<T> vec, size_t width, size_t x, size_t y)
 {
   return vec[(y * width) + x];
+}
+
+// index into a vector as if it were a 2d array with a glm::ivec2
+template<typename T>
+T & index(std::vector<T> vec, size_t width, glm::ivec2 xy)
+{
+  return index<T>(vec, width, xy.x, xy.y);
+}
+
+// index into a vector as if it were a 2d array
+template<typename T>
+void assign(std::vector<T> & vec, size_t width, size_t x, size_t y, T & val)
+{
+  vec[(y * width) + x] = val;
+}
+
+// index into a vector as if it were a 2d array with a glm::ivec2
+template<typename T>
+void assign(std::vector<T> & vec, size_t width, glm::ivec2 xy, T & val)
+{
+  assign<T>(vec, width, xy.x, xy.y, val);
 }
 
 class RNG
@@ -35,12 +58,15 @@ class IntRNG
 {
 public:
   IntRNG(unsigned int seed, int min, int max);
-  int next();
+  IntRNG(unsigned int seed);
+  unsigned int next();
   unsigned int getSeed() { return seed; }
 private:
   unsigned int seed;
   std::mt19937_64 engine;
-  std::uniform_int_distribution<int> dist;
+  std::uniform_int_distribution<unsigned int> dist;
 };
+
+unsigned int getRandomSeed();
 
 #endif

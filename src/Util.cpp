@@ -41,7 +41,21 @@ IntRNG::IntRNG(unsigned int inSeed, int min, int max)
   : seed(inSeed), engine(seed), dist(min, max)
 {}
 
-int IntRNG::next()
+// suitable for generating a new random seed based on an old one
+IntRNG::IntRNG(unsigned int inSeed)
+  : seed(inSeed),
+    engine(seed),
+    dist(std::numeric_limits<unsigned int>::min(),
+         std::numeric_limits<unsigned int>::max())
+{}
+
+unsigned int IntRNG::next()
 {
   return dist(engine);
+}
+
+unsigned int getRandomSeed()
+{
+  unsigned int seed = std::time(nullptr);
+  return IntRNG(seed).next();
 }

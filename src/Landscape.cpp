@@ -13,51 +13,243 @@ static const char * fragPath = "shader/heightMap.frag";
 // HeightMap -----------------------------------------------
 // ---------------------------------------------------------
 
-float & HeightMap::get(size_t x, size_t y)
-{
-  return index<float>(elevations, width, x, y);
-}
 
 // ---------------------------------------------------------
 // Natural -------------------------------------------------
 // ---------------------------------------------------------
 
-Natural::Natural(int seed,
-                 size_t size,
-                 float topLeft,
-                 float topRight,
-                 float bottomLeft,
-                 float bottomRight)
+HeightMap::HeightMap(unsigned int seed,
+                     size_t n,
+                     float topLeft,
+                     float topRight,
+                     float bottomLeft,
+                     float bottomRight)
 {
-  elevations.resize(size * size);
-  width = size;
-  for (size_t count = 0; count < size; ++count)
+  width = glm::pow(2, n) + 1;
+  elevations.resize(width * width);
+
+  for (size_t count = 0; count < (width * width); ++count)
     {
       elevations[count] = 0.0f;
     }
-  get(0, 0) = topLeft;
-  get(size - 1, 0) = topRight;
-  get(0, size - 1) = bottomLeft;
-  get(size - 1, size - 1) = bottomRight;
+
+  for (size_t count = 0; count < (width * width); ++count)
+    {
+      assert(elevations[count] == 0.0f);
+    }
+  auto tl = glm::ivec2(0, 0);
+  auto tr = glm::ivec2(width - 1, 0);
+  auto bl = glm::ivec2(0, width - 1);
+  auto br = glm::ivec2(width - 1, width - 1);
+
+  assign<float>(elevations, width, tl, topLeft);
+  assign<float>(elevations, width, tr, topRight);
+  assign<float>(elevations, width, bl, bottomLeft);
+  assign<float>(elevations, width, br, bottomRight);
+
+  diamondSquare(n, 0.5f, seed, tl, tr, bl, br);
+
+  auto bsWidth = width / 3;
+  auto offset = IntRNG(seed, 1, (bsWidth * 2) - 1).next();
+  std::cerr << "width = " << width
+            << " bsWidth = " << bsWidth
+            << " offset = " << offset << std::endl;
+
+  auto average = (index<float>(elevations, width, offset, offset)
+                  + index<float>(elevations, width, offset + bsWidth, offset)
+                  + index<float>(elevations, width, offset, offset + bsWidth)
+                  + index<float>(elevations, width,
+                                 offset + bsWidth, offset + bsWidth))
+    / 4.0f;
+
+  for (size_t x = offset; x <= offset + bsWidth; ++x)
+    {
+      for (size_t y = offset; y <= offset + bsWidth; ++y)
+        {
+          assign<float>(elevations, width, x, y, average);
+        }
+    }
 }
 
-// ---------------------------------------------------------
-// Buildable -----------------------------------------------
-// ---------------------------------------------------------
-
-Buildable::Buildable(float inElevation, size_t inSize)
+void HeightMap::safeSquareStep(glm::ivec2 target,
+                               glm::ivec2 l,
+                               glm::ivec2 u,
+                               glm::ivec2 r,
+                               glm::ivec2 d,
+                               float randVal)
 {
-  elevation = inElevation;
-  width = inSize;
+  float sum = 0.0f;
+  float denom = 0.0f;
+
+  if (l.x >= 0 && ((size_t) l.x) < width && l.y >= 0 && ((size_t) l.y) < width)
+    {
+      sum = sum + index<float>(elevations, width,
+                               (size_t) l.x, (size_t) l.y);
+      denom = denom + 1.0f;
+    }
+  if (u.x >= 0 && ((size_t) u.x) < width && u.y >= 0 && ((size_t) u.y) < width)
+    {
+      sum = sum + index<float>(elevations, width,
+                               (size_t) u.x, (size_t) u.y);
+      denom = denom + 1.0f;
+    }
+  if (r.x >= 0 && ((size_t) r.x) < width && r.y >= 0 && ((size_t) r.y) < width)
+    {
+      sum = sum + index<float>(elevations, width,
+                               (size_t) r.x, (size_t) r.y);
+      denom = denom + 1.0f;
+    }
+  if (d.x >= 0 && ((size_t) d.x) < width && d.y >= 0 && ((size_t) d.y) < width)
+    {
+      sum = sum + index<float>(elevations, width,
+                               (size_t) d.x, (size_t) d.y);
+      denom = denom + 1.0f;
+    }
+
+  assert(denom > 0.0f);
+
+  float val = (sum / denom) + randVal;
+  // if (!(val > -20.0f && val < 20.0f))
+  //   {
+  //     std::cerr << "l = " << glm::to_string(l)
+  //               << "u = " << glm::to_string(u)
+  //               << "r = " << glm::to_string(r)
+  //               << "d = " << glm::to_string(d)
+  //               << std::endl;
+  //     std::cerr << "sum = " << sum
+  //               << " denom = " << denom
+  //               << " randVal = " << randVal << std::endl;
+  //     std::cerr << "val = " << val
+  //               << " recalculated = " << (sum / denom) + randVal <<std::endl;
+  //     assert(false);
+  //   }
+  assign<float>(elevations, width, target, val);
 }
 
-// ---------------------------------------------------------
-// RealData ------------------------------------------------
-// ---------------------------------------------------------
-
-RealData::RealData(const char * ppm)
+void HeightMap::diamondSquare(size_t n,
+                              float range,
+                              unsigned int seed,
+                              glm::ivec2 tl,
+                              glm::ivec2 tr,
+                              glm::ivec2 bl,
+                              glm::ivec2 br)
 {
-  // TODO: read ppm
+  // sanity check that this thing is a square
+  assert(tl.x == bl.x);
+  assert(tr.x == br.x);
+  assert(tl.y == tr.y);
+  assert(bl.y == br.y);
+
+  if (n == 0) return; // nNext would be -1
+
+  // spin up relevant values
+
+  size_t nNext = n - 1;
+  size_t widthNext = glm::pow(2, nNext);
+  float rangeNext = range / 2.0f;
+
+  RNG rng(seed, range * -1.0f, range);
+  IntRNG seedGen(seed);
+
+  auto tc = glm::ivec2(tl.x + widthNext, tl.y);
+  auto lc = glm::ivec2(tl.x, tl.y + widthNext);
+  auto rc = glm::ivec2(tr.x, tr.y + widthNext);
+  auto bc = glm::ivec2(tl.x + widthNext, bl.y);
+
+  // These can potentiall be out of range
+  auto dtc = glm::ivec2(tc.x, tc.y - widthNext);
+  auto dlc = glm::ivec2(lc.x - widthNext, lc.y);
+  auto drc = glm::ivec2(rc.x + widthNext, rc.y);
+  auto dbc = glm::ivec2(bc.x, bc.y + widthNext);
+
+  auto center = glm::ivec2(tl.x + widthNext,
+                           tl.y + widthNext);
+  // diamond step
+
+  float randVal = rng.next();
+  float dsRes = ((index<float>(elevations, width, tl) +
+                  index<float>(elevations, width, tr) +
+                  index<float>(elevations, width, bl) +
+                  index<float>(elevations, width, br)) / 4.0f) + randVal;
+
+
+  assert(tl.x >= 0 && ((size_t) tl.x) < width && tl.y >= 0 && ((size_t) tl.y) < width);
+  assert(tr.x >= 0 && ((size_t) tr.x) < width && tr.y >= 0 && ((size_t) tr.y) < width);
+  assert(bl.x >= 0 && ((size_t) bl.x) < width && bl.y >= 0 && ((size_t) bl.y) < width);
+  assert(br.x >= 0 && ((size_t) br.x) < width && br.y >= 0 && ((size_t) br.y) < width);
+  if (!(dsRes > -1000.0f && dsRes < 1000.0f))
+    {
+      std::cerr << "dsRes = " << dsRes << std::endl;
+      std::cerr << "tl = " << glm::to_string(tl) << std::endl;
+      std::cerr << "tlVal = " << index<float>(elevations, width, tl) << std::endl;
+      std::cerr << "tr = " << glm::to_string(tr) << std::endl;
+      std::cerr << "trVal = " << index<float>(elevations, width, tr) << std::endl;
+      std::cerr << "bl = " << glm::to_string(bl) << std::endl;
+      std::cerr << "blVal = " << index<float>(elevations, width, bl) << std::endl;
+      std::cerr << "br = " << glm::to_string(br) << std::endl;
+      std::cerr << "brVal = " << index<float>(elevations, width, br) << std::endl;
+      std::cerr << "randVal = " << randVal << std::endl;
+      assert(false);
+    }
+  assign<float>(elevations, width, center, dsRes);
+
+  // square step
+
+  safeSquareStep(tc,
+                 dtc,
+                 glm::ivec2(tl),
+                 glm::ivec2(tr),
+                 glm::ivec2(center),
+                 rng.next());
+  safeSquareStep(lc,
+                 dlc,
+                 glm::ivec2(tl),
+                 glm::ivec2(bl),
+                 glm::ivec2(center),
+                 rng.next());
+  safeSquareStep(rc,
+                 drc,
+                 glm::ivec2(tr),
+                 glm::ivec2(br),
+                 glm::ivec2(center),
+                 rng.next());
+  safeSquareStep(bc,
+                 dbc,
+                 glm::ivec2(bl),
+                 glm::ivec2(br),
+                 glm::ivec2(center),
+                 rng.next());
+
+  // recurse
+
+  diamondSquare(nNext,
+                rangeNext,
+                seedGen.next(),
+                tl,
+                tc,
+                lc,
+                center);
+  diamondSquare(nNext,
+                rangeNext,
+                seedGen.next(),
+                tc,
+                tr,
+                center,
+                rc);
+  diamondSquare(nNext,
+                rangeNext,
+                seedGen.next(),
+                lc,
+                center,
+                bl,
+                bc);
+  diamondSquare(nNext,
+                rangeNext,
+                seedGen.next(),
+                center,
+                rc,
+                bc,
+                br);
 }
 
 // ---------------------------------------------------------
@@ -102,8 +294,8 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
       for (size_t x = 0; x < width; ++x)
         {
           verts.push_back(glm::vec3(x * spacing,
-                                    y * spacing,
-                                    index<float>(heights, width, x, y)));
+                                    index<float>(heights, width, x, y),
+                                    y * spacing));
         }
     }
 
@@ -118,18 +310,9 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
         }
       if (y < (width - 1))
         {
-          std::cerr << "y = " << y
-                    << "width = " << width
-                    << std::endl;
           idxs.push_back((width - 1) + ((y + 1) * width));
         }
     }
-
-  for (const auto & curr : idxs)
-    {
-      std::cerr << glm::to_string(curr) << std::endl;
-    }
-  std::cerr << "|verts| = " << verts.size() << std::endl;
 
   indices = idxs.size();
 
@@ -253,7 +436,9 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
 void LandscapeModel::draw()
 {
   glBindVertexArray(VAO);
+  glDisable(GL_CULL_FACE);
   glDrawElements(GL_TRIANGLE_STRIP, (GLsizei) indices, GL_UNSIGNED_INT, 0);
+  glEnable(GL_CULL_FACE);
   //glDrawElements(GL_POINTS, (GLsizei) indices, GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
 }
