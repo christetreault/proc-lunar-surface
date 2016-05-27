@@ -16,28 +16,28 @@ glm::vec3 trackBallMapping(float fwidth, float fheight,
 
 // index into a vector as if it were a 2d array
 template<typename T>
-T & index(std::vector<T> vec, size_t width, size_t x, size_t y)
+T & index(std::vector<T> & vec, size_t width, size_t x, size_t y)
 {
   return vec[(y * width) + x];
 }
 
 // index into a vector as if it were a 2d array with a glm::ivec2
 template<typename T>
-T & index(std::vector<T> vec, size_t width, glm::ivec2 xy)
+T & index(std::vector<T> & vec, size_t width, glm::ivec2 xy)
 {
   return index<T>(vec, width, xy.x, xy.y);
 }
 
 // index into a vector as if it were a 2d array
 template<typename T>
-void assign(std::vector<T> & vec, size_t width, size_t x, size_t y, T & val)
+void assign(std::vector<T> & vec, size_t width, size_t x, size_t y, T val)
 {
   vec[(y * width) + x] = val;
 }
 
 // index into a vector as if it were a 2d array with a glm::ivec2
 template<typename T>
-void assign(std::vector<T> & vec, size_t width, glm::ivec2 xy, T & val)
+void assign(std::vector<T> & vec, size_t width, glm::ivec2 xy, T val)
 {
   assign<T>(vec, width, xy.x, xy.y, val);
 }

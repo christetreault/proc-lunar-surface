@@ -49,8 +49,8 @@ HeightMap::HeightMap(unsigned int seed,
 
   diamondSquare(n, 0.5f, seed, tl, tr, bl, br);
 
-  auto bsWidth = width / 3;
-  IntRNG offsetRNG(seed, 1, (bsWidth * 2) - 1);
+  auto bsWidth = width / 4;
+  IntRNG offsetRNG(seed, 5, (bsWidth * 2) - 5);
   auto offsetX = offsetRNG.next();
   auto offsetY = offsetRNG.next();
 
