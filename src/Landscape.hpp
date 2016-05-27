@@ -55,6 +55,7 @@ public:
 
   size_t width;
   std::vector<float> elevations;
+  glm::ivec2 buildSiteOffset;
 private:
   void diamondSquare(size_t n,
                      float range,

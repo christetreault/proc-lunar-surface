@@ -50,21 +50,27 @@ HeightMap::HeightMap(unsigned int seed,
   diamondSquare(n, 0.5f, seed, tl, tr, bl, br);
 
   auto bsWidth = width / 3;
-  auto offset = IntRNG(seed, 1, (bsWidth * 2) - 1).next();
+  IntRNG offsetRNG(seed, 1, (bsWidth * 2) - 1);
+  auto offsetX = offsetRNG.next();
+  auto offsetY = offsetRNG.next();
+
   std::cerr << "width = " << width
             << " bsWidth = " << bsWidth
-            << " offset = " << offset << std::endl;
+            << " offsetX = " << offsetX
+            << " offsetY = " << offsetY << std::endl;
 
-  auto average = (index<float>(elevations, width, offset, offset)
-                  + index<float>(elevations, width, offset + bsWidth, offset)
-                  + index<float>(elevations, width, offset, offset + bsWidth)
+  buildSiteOffset = glm::ivec2(offsetX, offsetY);
+
+  auto average = (index<float>(elevations, width, offsetX, offsetY)
+                  + index<float>(elevations, width, offsetX + bsWidth, offsetY)
+                  + index<float>(elevations, width, offsetX, offsetY + bsWidth)
                   + index<float>(elevations, width,
-                                 offset + bsWidth, offset + bsWidth))
+                                 offsetX + bsWidth, offsetY + bsWidth))
     / 4.0f;
 
-  for (size_t x = offset; x <= offset + bsWidth; ++x)
+  for (size_t x = offsetX; x <= offsetX + bsWidth; ++x)
     {
-      for (size_t y = offset; y <= offset + bsWidth; ++y)
+      for (size_t y = offsetY; y <= offsetY + bsWidth; ++y)
         {
           assign<float>(elevations, width, x, y, average);
         }
