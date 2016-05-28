@@ -6,6 +6,8 @@ bool frozen = false;
 double atTime = 0.0;
 size_t cameraIdx = 0;
 bool resetCamera = false;
+bool idleCam = true;
+float idleCamSlowdown = 8.0f;
 
 const char* window_title = "Petting a cat's tummy is dangerous, but nothing ventured, nothing gained";
 
@@ -30,8 +32,32 @@ glm::mat4 P;
 
 std::shared_ptr<OBJObject> test;
 
+auto idleCamFn = [](glm::mat4 & rotate, double time)
+{
+  static float tPrev = (float) time;
+
+  if (time < 0.01) return;
+  if (!idleCam)
+    {
+      rotate = glm::mat4();
+      return;
+    }
+
+  float tCurr = (float) time;
+  float delta = (tCurr - tPrev) / idleCamSlowdown;
+
+  rotate = glm::rotate(glm::mat4(),
+                       delta,
+                       glm::vec3(0.0f, 1.0f, 0.0f)) * rotate;
+  tPrev = tCurr;
+};
+
 auto camera = std::make_shared<OrbitalCamera>(glm::vec3(0.0f, 1.0f, 0.0f),
-                                              glm::vec3(0.0f, 0.0f, 25.0f));
+                                              glm::vec3(0.0f, 12.0f, 25.0f));
+
+auto cameraXform = std::make_shared<Transform>(camera,
+                                               glm::mat4(),
+                                               idleCamFn);
 
 std::shared_ptr<Group> scene;
 
@@ -39,7 +65,7 @@ void Window::initialize_objects()
 {
   cameraEngaged = false;
 
-  scene = getScene(camera);
+  scene = getScene(cameraXform);
 
   atTime = 0.0f;
 
@@ -154,6 +180,19 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
         case GLFW_KEY_R:
           resetCamera = true;
           break;
+        case GLFW_KEY_C:
+          idleCam = !idleCam;
+          resetCamera = true;
+          cameraEngaged = false;
+          break;
+        case GLFW_KEY_MINUS:
+          idleCamSlowdown = idleCamSlowdown * 2.0f;
+          std::cerr << "Slowdown: " << idleCamSlowdown << std::endl;
+          break;
+        case GLFW_KEY_EQUAL:
+          idleCamSlowdown = idleCamSlowdown / 2.0f;
+          std::cerr << "Slowdown: " << idleCamSlowdown << std::endl;
+          break;
         case GLFW_KEY_SPACE:
           frozen = !frozen;
           if (frozen)
@@ -178,7 +217,11 @@ void Window::mouseCallback(GLFWwindow * window,
   if (button == GLFW_MOUSE_BUTTON_RIGHT)
     {
       if (action == GLFW_RELEASE) cameraEngaged = false;
-      else cameraEngaged = true;
+      else
+        {
+          cameraEngaged = true;
+          idleCam = false;
+        }
     }
 }
 

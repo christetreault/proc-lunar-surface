@@ -50,7 +50,7 @@ HeightMap::HeightMap(unsigned int seed,
   diamondSquare(n, 0.5f, seed, tl, tr, bl, br);
 
   auto bsWidth = width / 4;
-  IntRNG offsetRNG(seed, 5, (bsWidth * 2) - 5);
+  IntRNG offsetRNG(seed, 1, (bsWidth * 2) - 1);
   auto offsetX = offsetRNG.next();
   auto offsetY = offsetRNG.next();
 
@@ -152,10 +152,11 @@ void HeightMap::diamondSquare(size_t n,
 
   size_t nNext = n - 1;
   size_t widthNext = glm::pow(2, nNext);
-  float rangeNext = range / 2.0f;
 
   RNG rng(seed, range * -1.0f, range);
   IntRNG seedGen(seed);
+
+  float rangeNext = (range / 2.0f) - (0.1f * glm::abs(rng.next()));
 
   auto tc = glm::ivec2(tl.x + widthNext, tl.y);
   auto lc = glm::ivec2(tl.x, tl.y + widthNext);
@@ -299,9 +300,12 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
     {
       for (size_t x = 0; x < width; ++x)
         {
-          verts.push_back(glm::vec3(x * spacing,
+          float xf = (float) x;
+          float yf = (float) y;
+          // TODO: center this
+          verts.push_back(glm::vec3(xf * spacing,
                                     index<float>(heights, width, x, y),
-                                    y * spacing));
+                                    yf * spacing));
         }
     }
 

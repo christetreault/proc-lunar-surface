@@ -9,5 +9,5 @@ out vec4 color;
 
 void main()
 {
-  color = vec4(normalToFrag, 1.0f);
+  color = vec4(normalize(normalToFrag), 1.0f);
 }

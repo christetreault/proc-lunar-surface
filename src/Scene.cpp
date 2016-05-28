@@ -38,7 +38,7 @@ static std::shared_ptr<Transform> makeSky()
 static std::shared_ptr<Transform> makeGround()
 {
   size_t cols = 1;
-  size_t n = 5;
+  size_t n = 6;
   auto seed = getRandomSeed();
 
   std::cerr << "Seed used: " << seed << std::endl;
@@ -50,18 +50,18 @@ static std::shared_ptr<Transform> makeGround()
   //     std::cerr << curr << std::endl;
   //   }
 
-  auto hmm = std::make_shared<LandscapeModel>(hm.elevations,
-                                              cols,
-                                              hm.width);
+  auto hmModel = std::make_shared<LandscapeModel>(hm.elevations,
+                                                  cols,
+                                                  hm.width);
 
-  return std::make_shared<Transform>(hmm,
+  return std::make_shared<Transform>(hmModel,
                                      glm::scale(glm::mat4(),
-                                                glm::vec3(4.0f,
-                                                          4.0f,
-                                                          4.0f)));
+                                                glm::vec3(16.0f,
+                                                          16.0f,
+                                                          16.0f)));
 }
 
-std::shared_ptr<Group> getScene(std::shared_ptr<Camera> withCamera)
+std::shared_ptr<Group> getScene(std::shared_ptr<Transform> withCamera)
 {
   auto root = std::make_shared<Group>();
 
