@@ -292,21 +292,59 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
   std::vector<glm::vec2> texCoords;
   std::vector<Vertex> vertices;
 
+
+  auto maxX = std::numeric_limits<float>::min();
+  auto maxY = std::numeric_limits<float>::min();
+  auto maxZ = std::numeric_limits<float>::min();
+
+  auto minX = std::numeric_limits<float>::max();
+  auto minY = std::numeric_limits<float>::max();
+  auto minZ = std::numeric_limits<float>::max();
+
   assert(width > 1); // Don't waste our time
 
   auto spacing = ((float) cols) / (((float) width - 1));
 
-  for (size_t y = 0; y < width; ++y)
+  for (size_t z = 0; z < width; ++z)
     {
       for (size_t x = 0; x < width; ++x)
         {
-          float xf = (float) x;
-          float yf = (float) y;
+          float xf = (float) x * spacing;
+          if (xf > maxX) maxX = xf;
+          if (xf < minX) minX = xf;
+          float yf = index<float>(heights, width, x, z);
+          if (yf > maxY) maxY = yf;
+          if (yf < minY) minY = yf;
+          float zf = (float) z * spacing;
+          if (zf > maxZ) maxZ = zf;
+          if (zf < minZ) minZ = zf;
           // TODO: center this
-          verts.push_back(glm::vec3(xf * spacing,
-                                    index<float>(heights, width, x, y),
-                                    yf * spacing));
+          verts.push_back(glm::vec3(xf,
+                                    yf,
+                                    zf));
         }
+    }
+
+  auto largestDiff = 1.0f;
+  auto diffX = maxX - minX;
+  auto diffY = maxY - minY;
+  auto diffZ = maxZ - minZ;
+  glm::vec3 avg =
+    {
+      (maxX + minX) / 2,
+      (maxY + minY) / 2,
+      (maxZ + minZ) / 2
+    };
+
+  if (diffX > largestDiff) largestDiff = diffX;
+  if (diffY > largestDiff) largestDiff = diffY;
+  if (diffZ > largestDiff) largestDiff = diffZ;
+
+  for (auto & curr : verts)
+    {
+      std::cerr << "curr = " << glm::to_string(curr) << std::endl;
+      curr = (curr - avg) / largestDiff;
+      std::cerr << "curr = " << glm::to_string(curr) << std::endl;
     }
 
   // based on example at: http://www.learnopengles.com/tag/height-maps/
