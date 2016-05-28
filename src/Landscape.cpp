@@ -3,6 +3,9 @@
 static const char * vertPath = "shader/heightMap.vert";
 static const char * fragPath = "shader/heightMap.frag";
 
+static const char * stonePath = "res/textures/moonStone.jpg";
+static const char * gravelPath = "res/textures/gravel.jpg";
+
 // ---------------------------------------------------------
 // LandscapeBuilder ----------------------------------------
 // ---------------------------------------------------------
@@ -11,11 +14,6 @@ static const char * fragPath = "shader/heightMap.frag";
 
 // ---------------------------------------------------------
 // HeightMap -----------------------------------------------
-// ---------------------------------------------------------
-
-
-// ---------------------------------------------------------
-// Natural -------------------------------------------------
 // ---------------------------------------------------------
 
 HeightMap::HeightMap(unsigned int seed,
@@ -284,7 +282,7 @@ void crossIdxAcc(std::vector<glm::vec3> & verts,
 LandscapeModel::LandscapeModel(std::vector<float> heights,
                                size_t cols,
                                size_t width)
-  : VAO(0), VBO(0), EBO(0)
+  : stoneTex(stonePath), gravelTex(gravelPath), VAO(0), VBO(0), EBO(0)
 {
   std::vector<glm::vec3> verts;
   std::vector<GLuint> idxs;
@@ -292,6 +290,7 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
   std::vector<glm::vec2> texCoords;
   std::vector<Vertex> vertices;
 
+  // Vertices
 
   auto maxX = std::numeric_limits<float>::min();
   auto maxY = std::numeric_limits<float>::min();
@@ -342,10 +341,11 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
 
   for (auto & curr : verts)
     {
-      std::cerr << "curr = " << glm::to_string(curr) << std::endl;
       curr = (curr - avg) / largestDiff;
-      std::cerr << "curr = " << glm::to_string(curr) << std::endl;
+      texCoords.push_back(glm::vec2(curr.x, curr.z));
     }
+
+  // Indices
 
   // based on example at: http://www.learnopengles.com/tag/height-maps/
   for (GLuint y = 0; y < width - 1; ++y)
@@ -363,6 +363,8 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
     }
 
   indices = idxs.size();
+
+  // Normals
 
   for (size_t y = 0; y < width; ++y)
     {
@@ -427,13 +429,13 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
         }
     }
 
-  // TODO: texture coordinates
+  // OpenGL boilerplate
 
   for (size_t count = 0; count < verts.size(); ++count)
     {
       vertices.push_back({verts[count],
                           normals[count],
-                          glm::vec2(0.0f, 0.0f)});
+                          texCoords[count]});
     }
 
   glGenVertexArrays(1, &VAO);
@@ -478,15 +480,23 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
+  // Shaders
+
   shader = std::make_shared<Shader>(vertPath, fragPath);
 }
 
 void LandscapeModel::draw()
 {
   glBindVertexArray(VAO);
+  stoneTex.bind(0);
+  glUniform1i(glGetUniformLocation(shader->getId(), "stoneTex"), 0);
+  gravelTex.bind(1);
+  glUniform1i(glGetUniformLocation(shader->getId(), "gravelTex"), 1);
   glDisable(GL_CULL_FACE);
   glDrawElements(GL_TRIANGLE_STRIP, (GLsizei) indices, GL_UNSIGNED_INT, 0);
   glEnable(GL_CULL_FACE);
+  gravelTex.unbind();
+  stoneTex.unbind();
   //glDrawElements(GL_POINTS, (GLsizei) indices, GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
 }

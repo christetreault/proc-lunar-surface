@@ -5,8 +5,8 @@
 #include <map>
 #include <iostream>
 #include <SOIL/SOIL.h>
-
-// This module is icky. I'm open to suggestions
+#include <GL/glew.h>
+#include <cassert>
 
 class Texture
 {
@@ -22,6 +22,18 @@ public:
   unsigned char * bytes;
   int width;
   int height;
+};
+
+class GLTexture
+{
+public:
+  GLTexture(const char * fp);
+
+  void bind(size_t to);
+  void unbind();
+
+  std::shared_ptr<Texture> tex;
+  GLuint texId;
 };
 
 #endif

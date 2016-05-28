@@ -18,7 +18,7 @@ std::shared_ptr<Texture> Texture::getTexture(const char * path)
 
 Texture::Texture(const char * fp)
 {
-  std::cerr << "Loading: " << fp << "...";
+  std::cerr << "Loading: " << fp << "... ";
 
   int channels;
 
@@ -27,6 +27,45 @@ Texture::Texture(const char * fp)
                           &height,
                           &channels,
                           SOIL_LOAD_RGB);
-  std::cerr << " done!" << std::endl;
+
+  std::cerr << SOIL_last_result() << std::endl;
+  assert(bytes != NULL);
+
   path = fp;
+}
+
+GLTexture::GLTexture(const char * fp)
+{
+  tex = Texture::getTexture(fp);
+
+  glGenTextures(1, &texId);
+  glBindTexture(GL_TEXTURE_2D, texId);
+
+  glTexParameteri(GL_TEXTURE_2D,
+                  GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glTexImage2D(GL_TEXTURE_2D,
+               0,
+               GL_RGB,
+               tex->width,
+               tex->height,
+               0,
+               GL_RGB,
+               GL_UNSIGNED_BYTE,
+               tex->bytes);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void GLTexture::bind(size_t to)
+{
+  glActiveTexture(GL_TEXTURE0 + to);
+  glBindTexture(GL_TEXTURE_2D, texId);
+}
+
+void GLTexture::unbind()
+{
+  glBindTexture(GL_TEXTURE_2D, 0);
 }

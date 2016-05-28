@@ -82,6 +82,9 @@ public:
   void draw();
   std::shared_ptr<Shader> shader;
 private:
+  GLTexture stoneTex;
+  GLTexture gravelTex;
+
   GLsizei indices;
   GLuint VAO;
   GLuint VBO;
