@@ -51,6 +51,7 @@ static std::shared_ptr<Transform> makeGround()
   //   }
 
   auto hmModel = std::make_shared<LandscapeModel>(hm.elevations,
+                                                  seed,
                                                   cols,
                                                   hm.width);
 

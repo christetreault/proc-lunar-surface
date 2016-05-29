@@ -5,6 +5,7 @@ static const char * fragPath = "shader/heightMap.frag";
 
 static const char * stonePath = "res/textures/moonStone.jpg";
 static const char * gravelPath = "res/textures/gravel.jpg";
+static const char * depositPath = "res/textures/iridescent.jpg";
 
 // ---------------------------------------------------------
 // LandscapeBuilder ----------------------------------------
@@ -51,11 +52,6 @@ HeightMap::HeightMap(unsigned int seed,
   IntRNG offsetRNG(seed, 1, (bsWidth * 2) - 1);
   auto offsetX = offsetRNG.next();
   auto offsetY = offsetRNG.next();
-
-  std::cerr << "width = " << width
-            << " bsWidth = " << bsWidth
-            << " offsetX = " << offsetX
-            << " offsetY = " << offsetY << std::endl;
 
   buildSiteOffset = glm::ivec2(offsetX, offsetY);
 
@@ -279,16 +275,43 @@ void crossIdxAcc(std::vector<glm::vec3> & verts,
   ++additions;
 }
 
+static void placeDeposits(std::vector<size_t> & deps,
+                          unsigned int seed,
+                          size_t size,
+                          size_t amt)
+{
+  IntRNG rng(seed, 0, size - 1);
+  size_t placed = 0;
+
+  while (placed < amt)
+    {
+      auto curr = rng.next();
+      std::cerr << "rolled: " << curr << std::endl;
+      std::cerr << "deps has rolled? " << (std::find(deps.begin(), deps.end(), curr) != deps.end()) << std::endl;
+      std::cerr << "placed: " << placed << " amt: " << amt << std::endl;
+      if (std::find(deps.begin(), deps.end(), curr) == deps.end())
+        {
+          deps.push_back(curr);
+          ++placed;
+        }
+    }
+}
+
 LandscapeModel::LandscapeModel(std::vector<float> heights,
+                               unsigned int seed,
                                size_t cols,
                                size_t width)
-  : stoneTex(stonePath), gravelTex(gravelPath), VAO(0), VBO(0), EBO(0)
+  : stoneTex(stonePath), gravelTex(gravelPath),
+    depositTex(depositPath), VAO(0), VBO(0), EBO(0)
 {
   std::vector<glm::vec3> verts;
   std::vector<GLuint> idxs;
   std::vector<glm::vec3> normals;
   std::vector<glm::vec2> texCoords;
-  std::vector<Vertex> vertices;
+  std::vector<LandscapeVertex> vertices;
+
+  std::vector<size_t> deps;
+  placeDeposits(deps, seed, heights.size(), heights.size() / 40);
 
   // Vertices
 
@@ -433,9 +456,14 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
 
   for (size_t count = 0; count < verts.size(); ++count)
     {
+      float isDep = (std::find(deps.begin(),
+                               deps.end(),
+                               count) != deps.end()) ? 1.0f : 0.0f;
+
       vertices.push_back({verts[count],
                           normals[count],
-                          texCoords[count]});
+                          texCoords[count],
+                          isDep});
     }
 
   glGenVertexArrays(1, &VAO);
@@ -446,7 +474,7 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER,
-               vertices.size() * sizeof(Vertex),
+               vertices.size() * sizeof(LandscapeVertex),
                &vertices[0],
                GL_STATIC_DRAW);
 
@@ -460,22 +488,29 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
   glVertexAttribPointer(0, 3,
                         GL_FLOAT,
                         GL_FALSE,
-                        sizeof(Vertex),
+                        sizeof(LandscapeVertex),
                         (GLvoid *) 0);
 
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 3,
                         GL_FLOAT,
                         GL_FALSE,
-                        sizeof(Vertex),
-                        (GLvoid *) offsetof(Vertex, normal));
+                        sizeof(LandscapeVertex),
+                        (GLvoid *) offsetof(LandscapeVertex, normal));
 
   glEnableVertexAttribArray(2);
   glVertexAttribPointer(2, 2,
                         GL_FLOAT,
                         GL_FALSE,
-                        sizeof(Vertex),
-                        (GLvoid *) offsetof(Vertex, texCoord));
+                        sizeof(LandscapeVertex),
+                        (GLvoid *) offsetof(LandscapeVertex, texCoord));
+
+  glEnableVertexAttribArray(3);
+  glVertexAttribPointer(3, 1,
+                        GL_FLOAT,
+                        GL_FALSE,
+                        sizeof(LandscapeVertex),
+                        (GLvoid *) offsetof(LandscapeVertex, isDeposit));
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
@@ -492,11 +527,14 @@ void LandscapeModel::draw()
   glUniform1i(glGetUniformLocation(shader->getId(), "stoneTex"), 0);
   gravelTex.bind(1);
   glUniform1i(glGetUniformLocation(shader->getId(), "gravelTex"), 1);
+  depositTex.bind(2);
+  glUniform1i(glGetUniformLocation(shader->getId(), "depositTex"), 2);
   glDisable(GL_CULL_FACE);
   glDrawElements(GL_TRIANGLE_STRIP, (GLsizei) indices, GL_UNSIGNED_INT, 0);
   glEnable(GL_CULL_FACE);
   gravelTex.unbind();
   stoneTex.unbind();
+  depositTex.unbind();
   //glDrawElements(GL_POINTS, (GLsizei) indices, GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
 }

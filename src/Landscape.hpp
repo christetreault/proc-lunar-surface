@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <memory>
+#include <algorithm>
 #include "SceneGraph.hpp"
 #include "Util.hpp"
 #include "City.hpp"
@@ -77,6 +78,7 @@ class LandscapeModel : public Drawable
 {
 public:
   LandscapeModel(std::vector<float> heights,
+                 unsigned int seed,
                  size_t cols,
                  size_t width);
   void draw();
@@ -84,6 +86,7 @@ public:
 private:
   GLTexture stoneTex;
   GLTexture gravelTex;
+  GLTexture depositTex;
 
   GLsizei indices;
   GLuint VAO;

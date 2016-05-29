@@ -3,10 +3,11 @@
 in vec3 normalToFrag;
 in vec3 posToFrag;
 in vec2 texCoordToFrag;
-in float heightToFrag;
+in float depositValToFrag;
 
 uniform sampler2D stoneTex;
 uniform sampler2D gravelTex;
+uniform sampler2D depositTex;
 
 out vec4 color;
 
@@ -28,6 +29,23 @@ void main()
   float threshUpper = thresh + 0.2;
   float angle = min(upAngle, downAngle);
 
+  vec4 selectStoneTex;
+  if (depositValToFrag > 0.5)
+    {
+      selectStoneTex = texture(depositTex, texCoordToFrag);
+    }
+  else if (depositValToFrag > 0.2)
+    {
+      float t = mapRange(depositValToFrag, 0.2, 0.5, 0.0, 1.0);
+      selectStoneTex = mix(texture(stoneTex, texCoordToFrag),
+                           texture(depositTex, texCoordToFrag),
+                           t);
+    }
+  else
+    {
+      selectStoneTex = texture(stoneTex, texCoordToFrag);
+    }
+
   if (angle < thresh)
     {
       color = texture(gravelTex, texCoordToFrag);
@@ -36,11 +54,11 @@ void main()
     {
       float t = mapRange(angle, thresh, threshUpper, 0.0, 1.0);
       color = mix(texture(gravelTex, texCoordToFrag),
-                  texture(stoneTex, texCoordToFrag),
+                  selectStoneTex,
                   t);
     }
   else
     {
-      color = texture(stoneTex, texCoordToFrag);
+      color = selectStoneTex;
     }
 }
