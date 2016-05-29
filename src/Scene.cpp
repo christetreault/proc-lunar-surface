@@ -46,6 +46,30 @@ static std::shared_ptr<Group> makeGround()
   return builder.finalize();
 }
 
+auto lightRotateFn = [](glm::mat4 & rotate, double time)
+{
+  static float tPrev = (float) time;
+
+  if (time < 0.01) return;
+
+  float tCurr = (float) time;
+  float delta = (tCurr - tPrev) / 8.0f;
+
+  rotate = glm::rotate(glm::mat4(),
+                       delta,
+                       glm::vec3(0.0f, 1.0f, 0.0f)) * rotate;
+  tPrev = tCurr;
+};
+
+static std::shared_ptr<Transform> makeLight()
+{
+  auto light = std::make_shared<DirLight>(glm::vec3(0.0f, -5.0f, -25.0f),
+                                          glm::vec3(1.0f, 0.8f, 0.8f));
+  return std::make_shared<Transform>(light,
+                                     glm::mat4(),
+                                     lightRotateFn);
+}
+
 std::shared_ptr<Group> getScene(std::shared_ptr<Transform> withCamera)
 {
   auto root = std::make_shared<Group>();
@@ -53,8 +77,7 @@ std::shared_ptr<Group> getScene(std::shared_ptr<Transform> withCamera)
   root->insert(makeSky());
   root->insert(makeGround());
   root->insert(withCamera);
-  root->insert(std::make_shared<DirLight>(glm::vec3(0.0f, -5.0f, -25.0f),
-                                          glm::vec3(1.0f, 1.0f, 1.0f)));
+  root->insert(makeLight());
 
   return root;
 }
@@ -111,6 +134,10 @@ DrawFn getDrawFn (const glm::mat4 & P)
             {
               auto M = modelM;
               auto PV = P * camera->getV(cameraM);
+              auto lightPosDir = lightM * glm::vec4(light->dir.x,
+                                                    light->dir.y,
+                                                    light->dir.z,
+                                                    0.0f);
 
               // vertex shader uniforms
 
@@ -121,6 +148,21 @@ DrawFn getDrawFn (const glm::mat4 & P)
               glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
 
               // fragment shader uniforms
+
+            GLuint lightPosDirID = glGetUniformLocation(shaderProg,
+                                                        "lightDir");
+            glUniform4f(lightPosDirID,
+                        lightPosDir.x,
+                        lightPosDir.y,
+                        lightPosDir.z,
+                        lightPosDir.w);
+
+            GLuint lightColorID = glGetUniformLocation(shaderProg,
+                                                       "lightColor");
+            glUniform3f(lightColorID,
+                        light->color.x,
+                        light->color.y,
+                        light->color.z);
 
             };
 
