@@ -20,8 +20,9 @@ class LandscapeModel;
 
 class LandscapeBuilder
 {
+public:
   LandscapeBuilder(int seed);
-  LandscapeBuilder(const char * ppm);
+  LandscapeBuilder(int seed, const char * ppm);
 
   void permuteDoodads();
   void permuteCity();
@@ -29,8 +30,7 @@ class LandscapeBuilder
 
   std::shared_ptr<Group> finalize();
 private:
-  RNG floatGen;
-  IntRNG intGen;
+  IntRNG seedGen;
 
   std::shared_ptr<City> city;
 
@@ -56,7 +56,7 @@ public:
 
   size_t width;
   std::vector<float> elevations;
-  glm::ivec2 buildSiteOffset;
+  glm::uvec2 buildSiteCenter;
 private:
   void diamondSquare(size_t n,
                      float range,
@@ -79,10 +79,11 @@ class LandscapeModel : public Drawable
 public:
   LandscapeModel(std::vector<float> heights,
                  unsigned int seed,
-                 size_t cols,
-                 size_t width);
+                 size_t width,
+                 glm::uvec2 buildSiteCenter);
   void draw();
   std::shared_ptr<Shader> shader;
+  glm::vec3 buildSite;
 private:
   GLTexture stoneTex;
   GLTexture gravelTex;

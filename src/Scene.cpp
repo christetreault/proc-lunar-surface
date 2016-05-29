@@ -35,31 +35,15 @@ static std::shared_ptr<Transform> makeSky()
   return std::make_shared<Transform>(skyBox, skyBoxScaleMat);
 }
 
-static std::shared_ptr<Transform> makeGround()
+static std::shared_ptr<Group> makeGround()
 {
-  size_t cols = 1;
-  size_t n = 6;
   auto seed = getRandomSeed();
 
   std::cerr << "Seed used: " << seed << std::endl;
 
-  HeightMap hm(seed, n, 0.0f, 0.0f, 0.0f, 0.0f);
+  LandscapeBuilder builder(seed);
 
-  // for (const auto & curr : hm.elevations)
-  //   {
-  //     std::cerr << curr << std::endl;
-  //   }
-
-  auto hmModel = std::make_shared<LandscapeModel>(hm.elevations,
-                                                  seed,
-                                                  cols,
-                                                  hm.width);
-
-  return std::make_shared<Transform>(hmModel,
-                                     glm::scale(glm::mat4(),
-                                                glm::vec3(16.0f,
-                                                          16.0f,
-                                                          16.0f)));
+  return builder.finalize();
 }
 
 std::shared_ptr<Group> getScene(std::shared_ptr<Transform> withCamera)

@@ -11,7 +11,58 @@ static const char * depositPath = "res/textures/iridescent.jpg";
 // LandscapeBuilder ----------------------------------------
 // ---------------------------------------------------------
 
+LandscapeBuilder::LandscapeBuilder(int seed)
+  : seedGen(seed)
+{}
 
+std::shared_ptr<Group> LandscapeBuilder::finalize()
+{
+  auto root = std::make_shared<Group>();
+
+  auto hmModel = genLandscapeModel();
+
+  auto scaledRoot = std::make_shared<Group>();
+
+  auto baseScale = std::make_shared<Transform>(scaledRoot,
+                                               glm::scale(glm::mat4(),
+                                                          glm::vec3(16.0f,
+                                                                    16.0f,
+                                                                    16.0f)));
+  scaledRoot->insert(hmModel);
+  root->insert(baseScale);
+
+  // TODO: For testing. Much of this shoul prob move genCity
+  //auto test = genLandscapeModel();
+  //auto cityScale = std::make_shared<Transform>(test,
+  //                                             glm::scale(glm::mat4(),
+  //                                                        glm::vec3(3.0f/16.0f,
+  //                                                                  3.0f/16.0f,
+  //                                                                  3.0f/16.0f)));
+  //auto cityBase = std::make_shared<Transform>(cityScale,
+  //                                            glm::translate(glm::mat4(),
+  //                                                           hmModel->buildSite));
+  //scaledRoot->insert(cityBase);
+
+  return root;
+}
+
+std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
+{
+  size_t n = 6;
+
+  RNG cornerRNG(seedGen.next(), -0.5, 0.5);
+
+  HeightMap hm(seedGen.next(), n,
+               cornerRNG.next(),
+               cornerRNG.next(),
+               cornerRNG.next(),
+               cornerRNG.next());
+
+  return std::make_shared<LandscapeModel>(hm.elevations,
+                                          seedGen.next(),
+                                          hm.width,
+                                          hm.buildSiteCenter);
+}
 
 // ---------------------------------------------------------
 // HeightMap -----------------------------------------------
@@ -53,7 +104,8 @@ HeightMap::HeightMap(unsigned int seed,
   auto offsetX = offsetRNG.next();
   auto offsetY = offsetRNG.next();
 
-  buildSiteOffset = glm::ivec2(offsetX, offsetY);
+  buildSiteCenter = glm::uvec2(offsetX + (bsWidth / 2),
+                               offsetY + (bsWidth / 2));
 
   auto average = (index<float>(elevations, width, offsetX, offsetY)
                   + index<float>(elevations, width, offsetX + bsWidth, offsetY)
@@ -286,9 +338,6 @@ static void placeDeposits(std::vector<size_t> & deps,
   while (placed < amt)
     {
       auto curr = rng.next();
-      std::cerr << "rolled: " << curr << std::endl;
-      std::cerr << "deps has rolled? " << (std::find(deps.begin(), deps.end(), curr) != deps.end()) << std::endl;
-      std::cerr << "placed: " << placed << " amt: " << amt << std::endl;
       if (std::find(deps.begin(), deps.end(), curr) == deps.end())
         {
           deps.push_back(curr);
@@ -299,8 +348,8 @@ static void placeDeposits(std::vector<size_t> & deps,
 
 LandscapeModel::LandscapeModel(std::vector<float> heights,
                                unsigned int seed,
-                               size_t cols,
-                               size_t width)
+                               size_t width,
+                               glm::uvec2 buildSiteCenter)
   : stoneTex(stonePath), gravelTex(gravelPath),
     depositTex(depositPath), VAO(0), VBO(0), EBO(0)
 {
@@ -325,7 +374,7 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
 
   assert(width > 1); // Don't waste our time
 
-  auto spacing = ((float) cols) / (((float) width - 1));
+  auto spacing = 1.0f / (((float) width - 1));
 
   for (size_t z = 0; z < width; ++z)
     {
@@ -340,10 +389,12 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
           float zf = (float) z * spacing;
           if (zf > maxZ) maxZ = zf;
           if (zf < minZ) minZ = zf;
-          // TODO: center this
-          verts.push_back(glm::vec3(xf,
-                                    yf,
-                                    zf));
+
+          verts.push_back(glm::vec3(xf, yf, zf));
+          if (x == buildSiteCenter.x && z == buildSiteCenter.y)
+            {
+              buildSite = glm::vec3(xf, yf, zf);
+            }
         }
     }
 
@@ -367,6 +418,8 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
       curr = (curr - avg) / largestDiff;
       texCoords.push_back(glm::vec2(curr.x, curr.z));
     }
+
+  buildSite = (buildSite - avg) / largestDiff;
 
   // Indices
 
