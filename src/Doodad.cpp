@@ -1,8 +1,108 @@
 #include "Doodad.hpp"
 
 static const char * texPath = "res/textures/iridescent.jpg";
+
 static const char * vertPath = "shader/doodad.vert";
 static const char * fragPath = "shader/doodad.frag";
+
+// ---------------------------------------------------------
+// Doodad --------------------------------------------------
+// ---------------------------------------------------------
+
+Doodad::Doodad(float length, float topScale, float bottomScale)
+  : model(std::make_shared<Segment>(length, topScale, bottomScale)),
+    center(nullptr), topRight(nullptr), topLeft(nullptr),
+    bottomRight(nullptr), bottomLeft(nullptr)
+{}
+
+void Doodad::insert(std::shared_ptr<Node> what,
+                    DoodadMount where,
+                    std::function<void(glm::mat4 &, double)> uFn)
+{
+    switch (where)
+    {
+    case DoodadMount::center:
+      center = std::make_shared<Transform>(what,
+                                       model->getMountPoint(where),
+                                       uFn);
+      break;
+    case DoodadMount::topRight:
+      topRight = std::make_shared<Transform>(what,
+                                       model->getMountPoint(where),
+                                       uFn);
+      break;
+    case DoodadMount::topLeft:
+      topLeft = std::make_shared<Transform>(what,
+                                       model->getMountPoint(where),
+                                       uFn);
+      break;
+    case DoodadMount::bottomRight:
+      bottomRight = std::make_shared<Transform>(what,
+                                       model->getMountPoint(where),
+                                       uFn);
+      break;
+    case DoodadMount::bottomLeft:
+      bottomLeft = std::make_shared<Transform>(what,
+                                       model->getMountPoint(where),
+                                       uFn);;
+      break;
+    default:
+      std::cerr << "It should be impossible to reach this case!"
+                << std::endl;
+      assert(false);
+    }
+}
+
+void Doodad::getLights(const glm::mat4 & inM,
+                         std::vector<std::pair<std::shared_ptr<Light>,
+                                               glm::mat4> > & vec) const
+{
+  if (center != nullptr) center->getLights(inM, vec);
+  if (topRight != nullptr) topRight->getLights(inM, vec);
+  if (topLeft != nullptr) topLeft->getLights(inM, vec);
+  if (bottomRight != nullptr) bottomRight->getLights(inM, vec);
+  if (bottomLeft != nullptr) bottomLeft->getLights(inM, vec);
+}
+
+void Doodad::getCameras(const glm::mat4 & inM,
+                          std::vector<std::pair<std::shared_ptr<Camera>,
+                                                glm::mat4> > & vec) const
+{
+  if (center != nullptr) center->getCameras(inM, vec);
+  if (topRight != nullptr) topRight->getCameras(inM, vec);
+  if (topLeft != nullptr) topLeft->getCameras(inM, vec);
+  if (bottomRight != nullptr) bottomRight->getCameras(inM, vec);
+  if (bottomLeft != nullptr) bottomLeft->getCameras(inM, vec);
+}
+
+void Doodad::getDrawables(const glm::mat4 & inM,
+                            std::vector<std::pair<std::shared_ptr<Drawable>,
+                                                  glm::mat4> > & vec) const
+{
+  if (center != nullptr) center->getDrawables(inM, vec);
+  if (topRight != nullptr) topRight->getDrawables(inM, vec);
+  if (topLeft != nullptr) topLeft->getDrawables(inM, vec);
+  if (bottomRight != nullptr) bottomRight->getDrawables(inM, vec);
+  if (bottomLeft != nullptr) bottomLeft->getDrawables(inM, vec);
+
+  auto drawable = std::dynamic_pointer_cast<Drawable>(model);
+  vec.push_back(std::make_pair(drawable, inM));
+}
+
+void Doodad::update(double time)
+{
+  if (center != nullptr) center->update(time);
+  if (topRight != nullptr) topRight->update(time);
+  if (topLeft != nullptr) topLeft->update(time);
+  if (bottomRight != nullptr) bottomRight->update(time);
+  if (bottomLeft != nullptr) bottomLeft->update(time);
+}
+
+
+
+// ---------------------------------------------------------
+// Segment -------------------------------------------------
+// ---------------------------------------------------------
 
 static glm::vec3 genNormal(std::vector<glm::vec3> & verts,
                            size_t center,
@@ -25,7 +125,8 @@ static glm::vec3 genNormal(std::vector<glm::vec3> & verts,
 }
 
 Segment::Segment(float length, float topScale, float bottomScale)
-  : tex(texPath), VAO(0), VBO(0), EBO(0)
+  : tex(texPath, texPath, texPath, texPath, texPath, texPath),
+    VAO(0), VBO(0), EBO(0)
 {
   std::vector<glm::vec3> verts;
   std::vector<GLuint> idxs;
@@ -35,17 +136,22 @@ Segment::Segment(float length, float topScale, float bottomScale)
 
   // vertices
 
-  auto base = 0.0f;
-  auto tip = length;
-  auto baseCorners = length / 4.0f;
-  auto tipCorners = baseCorners * 3.0f;
+  auto base = (-length) / 4.0f;      // TODO: Clips through the floor.
+  auto tip = (3.0f * length) / 4.0f; // Do I care?
+  auto baseCorners = 0.0f;
+  auto tipCorners = length / 2.0f;
 
   auto top = glm::vec3(0.0f, tip, 0.0f) * topScale;
+  center = top;
 
   auto topBR = glm::vec3(0.5f, tipCorners, 0.5f) * topScale;
+  bottomRight = topBR;
   auto topTR = glm::vec3(0.5f, tipCorners, -0.5f) * topScale;
+  topRight = topTR;
   auto topTL = glm::vec3(-0.5f, tipCorners, -0.5f) * topScale;
+  topLeft = topTL;
   auto topBL = glm::vec3(-0.5f, tipCorners, 0.5f) * topScale;
+  bottomLeft = topBL;
 
   auto botBR = glm::vec3(0.5f, baseCorners, 0.5f) * bottomScale;
   auto botTR = glm::vec3(0.5f, baseCorners, -0.5f) * bottomScale;
@@ -68,11 +174,16 @@ Segment::Segment(float length, float topScale, float bottomScale)
   // normals
 
   auto topN = genNormal(verts, 0, 2, 3, 4, 1);
+  centerNorm = topN;
 
   auto topBRN = genNormal(verts, 1, 2, 0, 4, 5);
+  bottomRightNorm = topBRN;
   auto topTRN = genNormal(verts, 2, 3, 0, 1, 6);
+  topRightNorm = topTRN;
   auto topTLN = genNormal(verts, 3, 4, 0, 2, 7);
+  topLeftNorm = topTLN;
   auto topBLN = genNormal(verts, 4, 1, 0, 3, 8);
+  bottomLeftNorm = topBLN;
 
   auto botBRN = genNormal(verts, 5, 1, 8, 9, 6);
   auto botTRN = genNormal(verts, 6, 2, 5, 9, 7);
@@ -112,8 +223,7 @@ Segment::Segment(float length, float topScale, float bottomScale)
   for (size_t count = 0; count < verts.size(); ++count)
     {
       vertices.push_back({ verts[count],
-                           normals[count],
-                           glm::vec2(0.0f, 0.0f) });
+                           normals[count]});
 
     }
 
@@ -149,13 +259,6 @@ Segment::Segment(float length, float topScale, float bottomScale)
                         sizeof(DoodadVertex),
                         (GLvoid *) offsetof(DoodadVertex, normal));
 
-  glEnableVertexAttribArray(2);
-  glVertexAttribPointer(2, 2,
-                        GL_FLOAT,
-                        GL_FALSE,
-                        sizeof(DoodadVertex),
-                        (GLvoid *) offsetof(DoodadVertex, texCoord));
-
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
@@ -167,8 +270,78 @@ Segment::Segment(float length, float topScale, float bottomScale)
 void Segment::draw()
 {
   glBindVertexArray(VAO);
+  tex.bind(0);
+  glUniform1i(glGetUniformLocation(shader->getId(), "tex"), 0);
 
   glDrawElements(GL_TRIANGLES, (GLsizei) indices, GL_UNSIGNED_INT, 0);
 
+  tex.unbind();
   glBindVertexArray(0);
+}
+
+glm::mat4 Segment::getMountPoint(DoodadMount where)
+{
+  glm::vec3 translate;
+  glm::vec3 rotate;
+
+  switch (where)
+    {
+    case DoodadMount::center:
+      translate = center;
+      rotate = centerNorm;
+      break;
+    case DoodadMount::topRight:
+      translate = topRight;
+      rotate = topRightNorm;
+      break;
+    case DoodadMount::topLeft:
+      translate = topLeft;
+      rotate = topLeftNorm;
+      break;
+    case DoodadMount::bottomRight:
+      translate = bottomRight;
+      rotate = bottomRightNorm;
+      break;
+    case DoodadMount::bottomLeft:
+      translate = bottomLeft;
+      rotate = bottomLeftNorm;
+      break;
+    default:
+      std::cerr << "It should be impossible to reach this case!"
+                << std::endl;
+      assert(false);
+    }
+  // TODO: rotate
+
+  auto trans = glm::translate(glm::mat4(),
+                              translate);
+  auto rotY = glm::rotate(trans,
+                          rotate.y,
+                          glm::vec3(0.0f, 1.0f, 0.0f));
+  auto rotX = glm::rotate(rotY,
+                          -rotate.x,
+                          glm::vec3(1.0f, 0.0f, 0.0f));
+  auto rotZ = glm::rotate(rotX,
+                          rotate.z,
+                          glm::vec3(0.0f, 0.0f, 1.0f));
+
+  return rotZ;
+
+    // TODO: rotate
+
+  /* Option 2: rotation based on (0 - pos)
+  rotate = glm::vec3(0.0, 0.0, 0.0) - translate;
+
+  auto trans = glm::translate(glm::mat4(),
+                              translate);
+  auto rotY = glm::rotate(trans,
+                          rotate.y,
+                          glm::vec3(0.0f, 1.0f, 0.0f));
+  auto rotX = glm::rotate(rotY,
+                          rotate.x,
+                          glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+  return rotX;
+  */
 }

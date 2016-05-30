@@ -36,4 +36,21 @@ public:
   GLuint texId;
 };
 
+class CubeMap
+{
+public:
+  CubeMap(const char *,
+          const char *,
+          const char *,
+          const char *,
+          const char *,
+          const char *);
+
+  void bind(size_t to);
+  void unbind();
+
+  std::shared_ptr<Texture> faces[6];
+  GLuint texId;
+};
+
 #endif

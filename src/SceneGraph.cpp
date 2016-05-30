@@ -71,7 +71,7 @@ Transform::Transform(std::shared_ptr<Node> what,
   : xform(with), updateFn(uFn), target(what)
 {}
 
-void Group::remove(std::shared_ptr<Node> what)
+/*void Group::remove(std::shared_ptr<Node> what)
 {
   auto iter = children.begin();
 
@@ -82,7 +82,7 @@ void Group::remove(std::shared_ptr<Node> what)
           children.erase(iter);
         }
     }
-}
+    }*/
 
 void Group::getLights(const glm::mat4 & inM,
                           std::vector<std::pair<std::shared_ptr<Light>,
