@@ -10,6 +10,13 @@ typedef struct _Vertex
   glm::vec2 texCoord;
 } Vertex;
 
+typedef struct _DoodadVertex
+{
+  glm::vec3 position;
+  glm::vec3 normal;
+  glm::vec2 texCoord;
+} DoodadVertex;
+
 typedef struct _LandscapeVertex
 {
   glm::vec3 position;

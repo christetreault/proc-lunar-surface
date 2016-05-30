@@ -32,16 +32,16 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   root->insert(baseScale);
 
   // TODO: For testing. Much of this shoul prob move genCity
-  //auto test = genLandscapeModel();
-  //auto cityScale = std::make_shared<Transform>(test,
-  //                                             glm::scale(glm::mat4(),
-  //                                                        glm::vec3(3.0f/16.0f,
-  //                                                                  3.0f/16.0f,
-  //                                                                  3.0f/16.0f)));
-  //auto cityBase = std::make_shared<Transform>(cityScale,
-  //                                            glm::translate(glm::mat4(),
-  //                                                           hmModel->buildSite));
-  //scaledRoot->insert(cityBase);
+  auto test = std::make_shared<Segment>(2.0f, 1.0f, 0.5f);;
+  auto cityScale = std::make_shared<Transform>(test,
+                                               glm::scale(glm::mat4(),
+                                                          glm::vec3(1.0f/16.0f,
+                                                                    1.0f/16.0f,
+                                                                    1.0f/16.0f)));
+  auto cityBase = std::make_shared<Transform>(cityScale,
+                                              glm::translate(glm::mat4(),
+                                                             hmModel->buildSite));
+  scaledRoot->insert(cityBase);
 
   return root;
 }

@@ -170,6 +170,49 @@ DrawFn getDrawFn (const glm::mat4 & P)
           model->draw();
           model->shader->unbind();
         }
+            else if (typeid(*modelbase) == typeid(Segment))
+        {
+          auto model = std::dynamic_pointer_cast<Segment>(modelbase);
+          auto uniformFn = [=](GLuint shaderProg)
+            {
+              auto M = modelM;
+              auto PV = P * camera->getV(cameraM);
+              auto lightPosDir = lightM * glm::vec4(light->dir.x,
+                                                    light->dir.y,
+                                                    light->dir.z,
+                                                    0.0f);
+
+              // vertex shader uniforms
+
+              GLuint PVID = glGetUniformLocation(shaderProg, "PV");
+              glUniformMatrix4fv(PVID, 1, GL_FALSE, &PV[0][0]);
+
+              GLuint MID = glGetUniformLocation(shaderProg, "M");
+              glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
+
+              // fragment shader uniforms
+
+            GLuint lightPosDirID = glGetUniformLocation(shaderProg,
+                                                        "lightDir");
+            glUniform4f(lightPosDirID,
+                        lightPosDir.x,
+                        lightPosDir.y,
+                        lightPosDir.z,
+                        lightPosDir.w);
+
+            GLuint lightColorID = glGetUniformLocation(shaderProg,
+                                                       "lightColor");
+            glUniform3f(lightColorID,
+                        light->color.x,
+                        light->color.y,
+                        light->color.z);
+
+            };
+
+          model->shader->bind(uniformFn);
+          model->draw();
+          model->shader->unbind();
+        }
       else if (typeid(*modelbase) == typeid(OBJDrawable))
         {
           auto model = std::dynamic_pointer_cast<OBJDrawable>(modelbase);
