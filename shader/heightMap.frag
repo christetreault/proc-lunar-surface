@@ -79,7 +79,7 @@ void main()
 
   float upAngle = acos(dot(normal, straightUp));
   float downAngle = acos(dot(normal, straightDown));
-  float thresh = 0.5;
+  float thresh = 0.4;
   float threshUpper = thresh + 0.2;
   float angle = min(upAngle, downAngle);
 

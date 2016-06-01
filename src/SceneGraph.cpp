@@ -47,6 +47,7 @@ void Group::update(double time)
 {
   for (const auto & curr : children)
     {
+      if (curr == nullptr) continue;
       if (curr->isGroup())
         {
           auto group = std::dynamic_pointer_cast<Group>(curr);
@@ -58,6 +59,9 @@ void Group::update(double time)
 void Transform::update(double time)
 {
   updateFn(xform, time);
+
+  if (target == nullptr) return;
+
   if (target->isGroup())
     {
       auto group = std::dynamic_pointer_cast<Group>(target);
@@ -92,6 +96,7 @@ void Group::getLights(const glm::mat4 & inM,
 
   for (const auto & curr : children)
     {
+      if (curr == nullptr) continue;
       if (curr->isLight())
         {
           auto light = std::dynamic_pointer_cast<Light>(curr);
@@ -110,6 +115,8 @@ void Transform::getLights(const glm::mat4 & inM,
                                                 glm::mat4> > & vec) const
 {
   auto outM = inM * toWorld();
+
+  if (target == nullptr) return;
 
   if (target->isLight())
     {
@@ -132,6 +139,7 @@ void Group::getCameras(const glm::mat4 & inM,
 
   for (const auto & curr : children)
     {
+      if (curr == nullptr) continue;
       if (curr->isCamera())
         {
           auto camera = std::dynamic_pointer_cast<Camera>(curr);
@@ -151,6 +159,7 @@ void Transform::getCameras(const glm::mat4 & inM,
 {
   auto outM = inM * toWorld();
 
+  if (target == nullptr) return;
 
   if (target->isCamera())
     {
@@ -172,6 +181,7 @@ void Group::getDrawables(const glm::mat4 & inM,
 
   for (const auto & curr : children)
     {
+      if (curr == nullptr) continue;
       if (curr->isDrawable())
         {
           auto drawable = std::dynamic_pointer_cast<Drawable>(curr);
@@ -190,6 +200,8 @@ void Transform::getDrawables(const glm::mat4 & inM,
                                          glm::mat4> > & vec) const
 {
   auto outM = inM * toWorld();
+
+  if (target == nullptr) return;
 
   if (target->isDrawable())
     {

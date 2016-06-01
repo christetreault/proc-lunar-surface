@@ -6,20 +6,22 @@
 #include "SceneGraph.hpp"
 #include "Texture.hpp"
 #include "Shader.hpp"
+#include "Util.hpp"
 
 static const char * ddVertPath = "shader/doodad.vert";
 static const char * ddFragPath = "shader/doodad.frag";
 
 enum class DoodadMount
 {
-  center, topRight, topLeft, bottomRight, bottomLeft
+  center = 0, topRight = 1, topLeft = 2, bottomRight = 3, bottomLeft = 4
 };
 
 class Segment : public Drawable
 {
 public:
   Segment(float length, float topScale, float bottomScale,
-         std::shared_ptr<Shader> inShader);
+          float topLength, float bottomLength,
+          std::shared_ptr<Shader> inShader);
   void draw();
 
   std::shared_ptr<Shader> shader;
@@ -50,6 +52,7 @@ class Doodad : public Group
 public:
 
   Doodad(float length, float topScale, float bottomScale,
+         float topLength, float bottomLength,
          std::shared_ptr<Shader> inShader);
 
   virtual void insert(std::shared_ptr<Node> what)
@@ -82,5 +85,16 @@ private:
   std::shared_ptr<Transform> bottomLeft;
 
 };
+
+std::shared_ptr<Doodad> verticalBulge(int seed,
+                                      std::shared_ptr<Shader> shader,
+                                      std::shared_ptr<Transform> & p1,
+                                      std::shared_ptr<Transform> & p2,
+                                      std::shared_ptr<Transform> & p3,
+                                      std::shared_ptr<Transform> & p4);
+
+std::shared_ptr<Doodad> spiralBranch(int seed,
+                                     std::shared_ptr<Shader> shader,
+                                     std::shared_ptr<Doodad> & p1);
 
 #endif

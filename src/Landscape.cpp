@@ -35,20 +35,56 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
                                                           glm::vec3(16.0f,
                                                                     16.0f,
                                                                     16.0f)));
-  scaledRoot->insert(hmModel);
-  root->insert(baseScale);
+  //scaledRoot->insert(hmModel);
+  //root->insert(baseScale);
 
   // TODO: For testing. Much of this shoul prob move genCity
 
   auto ddShader = std::make_shared<Shader>(ddVertPath, ddFragPath);
 
-  auto test = std::make_shared<Doodad>(2.0f, 1.0f, 0.5f, ddShader);
-  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
-               DoodadMount::topRight);
-  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
-               DoodadMount::bottomLeft);
-  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
-               DoodadMount::center);
+  //auto test = std::make_shared<Doodad>(2.0f, 1.0f, 0.5f, ddShader);
+  //test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
+  //             DoodadMount::topRight);
+  //test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
+  //             DoodadMount::bottomLeft);
+  //test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
+  //             DoodadMount::center);
+
+  std::shared_ptr<Transform> p1 = nullptr;
+  std::shared_ptr<Transform> p2 = nullptr;
+  std::shared_ptr<Transform> p3 = nullptr;
+  std::shared_ptr<Transform> p4 = nullptr;
+  auto test = verticalBulge(seedGen.next(),
+                            ddShader,
+                            p1, p2, p3, p4);
+
+  std::shared_ptr<Doodad> n1 = nullptr;
+
+  if (p1 != nullptr)
+    {
+      p1->insert(spiralBranch(seedGen.next(),
+                              ddShader,
+                              n1));
+    }
+  if (p2 != nullptr)
+    {
+      p2->insert(spiralBranch(seedGen.next(),
+                              ddShader,
+                              n1));
+    }
+  if (p3 != nullptr)
+    {
+      p3->insert(spiralBranch(seedGen.next(),
+                              ddShader,
+                              n1));
+    }
+  if (p4 != nullptr)
+    {
+      p4->insert(spiralBranch(seedGen.next(),
+                              ddShader,
+                              n1));
+    }
+
   auto cityScale = std::make_shared<Transform>(test,
                                                glm::scale(glm::mat4(),
                                                           glm::vec3(0.3f/16.0f,
@@ -59,6 +95,7 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
                                                              hmModel->buildSite));
   scaledRoot->insert(cityBase);
 
+  root->insert(test);
   return root;
 }
 
@@ -77,6 +114,8 @@ std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
                cornerRNG.next());
 
   return std::make_shared<LandscapeModel>(hm.elevations,
+                                          hm.heightMin,
+                                          hm.heightMax,
                                           seedGen.next(),
                                           hm.width,
                                           hm.buildSiteCenter);
@@ -95,6 +134,9 @@ HeightMap::HeightMap(unsigned int seed,
 {
   width = glm::pow(2, n) + 1;
   elevations.resize(width * width);
+
+  heightMin = std::numeric_limits<float>::max();
+  heightMax = std::numeric_limits<float>::min();
 
   for (size_t count = 0; count < (width * width); ++count)
     {
@@ -151,13 +193,18 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
      SOIL_LOAD_L
      );
 
+  heightMin = std::numeric_limits<float>::max();
+  heightMax = std::numeric_limits<float>::min();
+
   for (int x = 0; x < iwidth; ++x)
     {
       for (int y = 0; y < iheight; ++y)
         {
           //std::cerr << "x:y = " << x << ":" << y << std::endl;
           float curr = (float) bytes[y * iwidth + x];
-          elevations.push_back(mapRange(curr, 0, 255, 0, 0.1));
+          if (curr > heightMax) heightMax = curr;
+          if (curr < heightMin) heightMin = curr;
+          elevations.push_back(curr);
           //std::cerr << "curr: " << (mapRange(curr, 0, 255, 0, 1)) << std::endl;
         }
     }
@@ -228,6 +275,10 @@ void HeightMap::safeSquareStep(glm::ivec2 target,
   assert(denom > 0.0f);
 
   float val = (sum / denom) + randVal;
+
+  if (val > heightMax) heightMax = val;
+  if (val < heightMin) heightMin = val;
+
   // if (!(val > -20.0f && val < 20.0f))
   //   {
   //     std::cerr << "l = " << glm::to_string(l)
@@ -312,6 +363,9 @@ void HeightMap::diamondSquare(size_t n,
       assert(false);
     }
   assign<float>(elevations, width, center, dsRes);
+
+  if (dsRes > heightMax) heightMax = dsRes;
+  if (dsRes < heightMin) heightMin = dsRes;
 
   // square step
 
@@ -414,6 +468,8 @@ static void placeDeposits(std::vector<size_t> & deps,
 }
 
 LandscapeModel::LandscapeModel(std::vector<float> heights,
+                               float heightMin,
+                               float heightMax,
                                unsigned int seed,
                                size_t width,
                                glm::uvec2 buildSiteCenter)
@@ -450,12 +506,28 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
           float xf = (float) x * spacing;
           if (xf > maxX) maxX = xf;
           if (xf < minX) minX = xf;
-          float yf = index<float>(heights, width, x, z);// * spacing;
+          float yf = mapRange(index<float>(heights, width, x, z) * spacing,
+                              heightMin, heightMax, 0.0f, 25.0f);
           if (yf > maxY) maxY = yf;
           if (yf < minY) minY = yf;
           float zf = (float) z * spacing;
           if (zf > maxZ) maxZ = zf;
           if (zf < minZ) minZ = zf;
+
+          if (!(xf >= 0.0f && xf <= 1.0f))
+            {
+              std::cerr << "x val out of range: " << xf << std::endl;
+            }
+          if (!(yf >= 0.0f && yf <= 25.0f))
+            {
+              std::cerr << "y val out of range: " << yf << std::endl;
+              std::cerr << "original y: " << index<float>(heights, width, x, z) * spacing << std::endl;
+              std::cerr << "y min/max: " << heightMin << "/" << heightMax << std::endl;
+            }
+          if (!(zf >= 0.0f && zf <= 1.0f))
+            {
+              std::cerr << "z val out of range: " << zf << std::endl;
+            }
 
           verts.push_back(glm::vec3(xf, yf, zf));
           if (x == buildSiteCenter.x && z == buildSiteCenter.y)

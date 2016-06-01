@@ -192,20 +192,26 @@ DrawFn getDrawFn (const glm::mat4 & P)
 
               // fragment shader uniforms
 
-            GLuint lightPosDirID = glGetUniformLocation(shaderProg,
-                                                        "lightDir");
-            glUniform4f(lightPosDirID,
-                        lightPosDir.x,
-                        lightPosDir.y,
-                        lightPosDir.z,
-                        lightPosDir.w);
+              GLuint lightPosDirID = glGetUniformLocation(shaderProg,
+                                                          "lightDir");
+              glUniform4f(lightPosDirID,
+                          lightPosDir.x,
+                          lightPosDir.y,
+                          lightPosDir.z,
+                          lightPosDir.w);
 
-            GLuint lightColorID = glGetUniformLocation(shaderProg,
-                                                       "lightColor");
-            glUniform3f(lightColorID,
-                        light->color.x,
-                        light->color.y,
-                        light->color.z);
+              GLuint lightColorID = glGetUniformLocation(shaderProg,
+                                                         "lightColor");
+              glUniform3f(lightColorID,
+                          light->color.x,
+                          light->color.y,
+                          light->color.z);
+
+              GLuint timeID =glGetUniformLocation(shaderProg,
+                                                  "time");
+              glUniform1f(timeID,
+                          fmod((float) glfwGetTime() / 16.0f,
+                               2.0f * glm::pi<float>()));
 
             };
 

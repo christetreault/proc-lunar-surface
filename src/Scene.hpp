@@ -7,6 +7,7 @@
 #include "SkyBox.hpp"
 #include <memory>
 #include <glm/glm.hpp>
+#include <GLFW/glfw3.h>
 
 // top level code to build a scene graph. Not strictly needed,
 // but reduces clutter in Window.cpp

@@ -57,6 +57,9 @@ public:
   size_t width;
   std::vector<float> elevations;
   glm::uvec2 buildSiteCenter;
+
+  float heightMax;
+  float heightMin;
 private:
   void diamondSquare(size_t n,
                      float range,
@@ -78,6 +81,8 @@ class LandscapeModel : public Drawable
 {
 public:
   LandscapeModel(std::vector<float> heights,
+                 float heightMin,
+                 float heightMax,
                  unsigned int seed,
                  size_t width,
                  glm::uvec2 buildSiteCenter);

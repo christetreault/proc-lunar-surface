@@ -7,8 +7,10 @@ static const char * texPath = "res/textures/iridescent.jpg";
 // ---------------------------------------------------------
 
 Doodad::Doodad(float length, float topScale, float bottomScale,
-         std::shared_ptr<Shader> inShader)
-  : model(std::make_shared<Segment>(length, topScale, bottomScale, inShader)),
+               float topLength, float bottomLength,
+               std::shared_ptr<Shader> inShader)
+  : model(std::make_shared<Segment>(length, topScale, bottomScale,
+                                    topLength, bottomLength, inShader)),
     center(nullptr), topRight(nullptr), topLeft(nullptr),
     bottomRight(nullptr), bottomLeft(nullptr)
 {}
@@ -109,7 +111,17 @@ static glm::vec3 genNormal(std::vector<glm::vec3> & verts,
                            size_t down,
                            size_t right)
 {
+  //std::cerr << "v1: " << glm::to_string(verts[center] - verts[up]) << std::endl;
+  //std::cerr << "v1: " << glm::to_string(verts[center] - verts[left]) << std::endl;
 
+  //std::cerr << "v2: " << glm::to_string(verts[center] - verts[left]) << std::endl;
+  //std::cerr << "v2: " << glm::to_string(verts[center] - verts[down]) << std::endl;
+
+  //std::cerr << "v3: " << glm::to_string(verts[center] - verts[down]) << std::endl;
+  //std::cerr << "v3: " << glm::to_string(verts[center] - verts[right]) << std::endl;
+
+  //std::cerr << "v4: " << glm::to_string(verts[center] - verts[right]) << std::endl;
+  //std::cerr << "v4: " << glm::to_string(verts[center] - verts[up]) << std::endl;
   auto n1 = glm::cross(verts[center] - verts[up],
                        verts[center] - verts[left]);
   auto n2 = glm::cross(verts[center] - verts[left],
@@ -123,7 +135,8 @@ static glm::vec3 genNormal(std::vector<glm::vec3> & verts,
 }
 
 Segment::Segment(float length, float topScale, float bottomScale,
-         std::shared_ptr<Shader> inShader)
+                 float topLength, float bottomLength,
+                 std::shared_ptr<Shader> inShader)
   : shader(inShader),
     tex(texPath, texPath, texPath, texPath, texPath, texPath),
     VAO(0), VBO(0), EBO(0)
@@ -136,29 +149,31 @@ Segment::Segment(float length, float topScale, float bottomScale,
 
   // vertices
 
-  auto base = (-length) / 4.0f;      // TODO: Clips through the floor.
-  auto tip = (3.0f * length) / 4.0f; // Do I care?
+  auto base = 0.0f - bottomLength; // TODO: Clips through the floor.
+  auto tip = length + topLength;   // Do I care?
   auto baseCorners = 0.0f;
-  auto tipCorners = length / 2.0f;
+  auto tipCorners = length;
+  auto tipCornersScale = 0.5f * topScale;
+  auto baseCornersScale = 0.5f * bottomScale;
 
-  auto top = glm::vec3(0.0f, tip, 0.0f) * topScale;
+  auto top = glm::vec3(0.0f, tip, 0.0f);
   center = top;
 
-  auto topBR = glm::vec3(0.5f, tipCorners, 0.5f) * topScale;
+  auto topBR = glm::vec3(tipCornersScale, tipCorners, tipCornersScale);
   bottomRight = topBR;
-  auto topTR = glm::vec3(0.5f, tipCorners, -0.5f) * topScale;
+  auto topTR = glm::vec3(tipCornersScale, tipCorners, -tipCornersScale);
   topRight = topTR;
-  auto topTL = glm::vec3(-0.5f, tipCorners, -0.5f) * topScale;
+  auto topTL = glm::vec3(-tipCornersScale, tipCorners, -tipCornersScale);
   topLeft = topTL;
-  auto topBL = glm::vec3(-0.5f, tipCorners, 0.5f) * topScale;
+  auto topBL = glm::vec3(-tipCornersScale, tipCorners, tipCornersScale);
   bottomLeft = topBL;
 
-  auto botBR = glm::vec3(0.5f, baseCorners, 0.5f) * bottomScale;
-  auto botTR = glm::vec3(0.5f, baseCorners, -0.5f) * bottomScale;
-  auto botTL = glm::vec3(-0.5f, baseCorners, -0.5f) * bottomScale;
-  auto botBL = glm::vec3(-0.5f, baseCorners, 0.5f) * bottomScale;
+  auto botBR = glm::vec3(baseCornersScale, baseCorners, baseCornersScale);
+  auto botTR = glm::vec3(baseCornersScale, baseCorners, -baseCornersScale);
+  auto botTL = glm::vec3(-baseCornersScale, baseCorners, -baseCornersScale);
+  auto botBL = glm::vec3(-baseCornersScale, baseCorners, baseCornersScale);
 
-  auto bot = glm::vec3(0.0f, base, 0.0f) * bottomScale;
+  auto bot = glm::vec3(0.0f, base, 0.0f);
 
   verts = { top,   // 0
             topBR, // 1
@@ -284,7 +299,7 @@ glm::mat4 Segment::getMountPoint(DoodadMount where)
     {
     case DoodadMount::center:
       translate = center;
-      rotate = centerNorm;
+      //rotate = centerNorm;
       break;
     case DoodadMount::topRight:
       translate = topRight;
@@ -309,23 +324,36 @@ glm::mat4 Segment::getMountPoint(DoodadMount where)
     }
   // TODO: rotate
 
+
   auto trans = glm::translate(glm::mat4(),
                               translate);
-  auto rotY = glm::rotate(trans,
-                          rotate.y,
+  //auto rotY = glm::rotate(trans,
+  //                        rotate.y,
+  //                        glm::vec3(0.0f, 1.0f, 0.0f));
+
+  auto thetaY = (float) atan2(rotate.x, rotate.z);
+  //auto thetaZ = (float) atan2(std::abs(rotate.x), std::abs(rotate.y));
+  auto thetaX = (float) atan2(std::abs(rotate.y), std::abs(rotate.z));
+
+  auto rot1 = glm::rotate(glm::mat4(),
+                          thetaY,
                           glm::vec3(0.0f, 1.0f, 0.0f));
-  auto rotX = glm::rotate(rotY,
-                          -rotate.x,
+  auto rot2 = glm::rotate(glm::mat4(),
+                          thetaX,
                           glm::vec3(1.0f, 0.0f, 0.0f));
-  auto rotZ = glm::rotate(rotX,
-                          rotate.z,
-                          glm::vec3(0.0f, 0.0f, 1.0f));
+  //auto rot2 = glm::rotate(rotX,
+  //                        rotate.z,
+  //                        glm::vec3(0.0f, 0.0f, 1.0f));
 
-  return rotZ;
 
-    // TODO: rotate
+
+  return trans * rot1 * rot2;
+
+
+  // TODO: rotate
 
   /* Option 2: rotation based on (0 - pos)
+
   rotate = glm::vec3(0.0, 0.0, 0.0) - translate;
 
   auto trans = glm::translate(glm::mat4(),
@@ -340,4 +368,131 @@ glm::mat4 Segment::getMountPoint(DoodadMount where)
 
   return rotX;
   */
+}
+
+// ---------------------------------------------------------
+// Segment Primitives --------------------------------------
+// ---------------------------------------------------------
+
+std::shared_ptr<Doodad> verticalBulge(int seed,
+                                      std::shared_ptr<Shader> shader,
+                                      std::shared_ptr<Transform> & p1,
+                                      std::shared_ptr<Transform> & p2,
+                                      std::shared_ptr<Transform> & p3,
+                                      std::shared_ptr<Transform> & p4)
+{
+  std::vector<unsigned int> taken;
+  IntRNG rng(seed, 1, 4);
+
+  auto amt = rng.next();
+  size_t placed = 0;
+
+  while (placed < amt)
+    {
+      auto curr = rng.next();
+      if (std::find(taken.begin(), taken.end(), curr) == taken.end())
+        {
+          taken.push_back(curr);
+          ++placed;
+        }
+    }
+
+  p1 = nullptr;
+  p2 = nullptr;
+  p3 = nullptr;
+  p4 = nullptr;
+
+  auto base = std::make_shared<Doodad>(4.0f,
+                                       1.5f,
+                                       0.25f,
+                                       0.5f,
+                                       0.0f,
+                                       shader);
+  auto center = std::make_shared<Doodad>(1.0f,
+                                         3.0f,
+                                         2.5f,
+                                         0.5f,
+                                         1.0f,
+                                         shader);
+  auto top = std::make_shared<Doodad>(2.0f,
+                                      4.5f,
+                                      3.0f,
+                                      2.0f,
+                                      0.5f,
+                                      shader);
+
+
+  base->insert(center, DoodadMount::center);
+  center->insert(top, DoodadMount::center);
+
+  auto scaleVec = glm::vec3(0.5f, 0.5f, 0.5f);
+
+  for (const auto & curr : taken)
+    {
+      switch (curr)
+        {
+        case 1:
+          p1 = std::make_shared<Transform>(nullptr,
+                                           glm::scale(glm::mat4(),
+                                                      scaleVec));
+          center->insert(p1, (DoodadMount) curr);
+          break;
+        case 2:
+          p2 = std::make_shared<Transform>(nullptr,
+                                           glm::scale(glm::mat4(),
+                                                      scaleVec));
+          center->insert(p2, (DoodadMount) curr);
+          break;
+        case 3:
+          p3 = std::make_shared<Transform>(nullptr,
+                                           glm::scale(glm::mat4(),
+                                                      scaleVec));
+          center->insert(p3, (DoodadMount) curr);
+          break;
+        case 4:
+          p4 = std::make_shared<Transform>(nullptr,
+                                           glm::scale(glm::mat4(),
+                                                      scaleVec));
+          center->insert(p4, (DoodadMount) curr);
+          break;
+        }
+    }
+
+  return base;
+}
+
+std::shared_ptr<Doodad> spiralBranch(int seed,
+                                     std::shared_ptr<Shader> shader,
+                                     std::shared_ptr<Doodad> & p1)
+{
+  IntRNG rng(seed, 0, 4);
+  auto branches = rng.next() + 3;
+  size_t curr = 0;
+  size_t takenLast = 0;
+
+  std::shared_ptr<Doodad> base;
+  std::shared_ptr<Doodad> top;
+
+  base = std::make_shared<Doodad>(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, shader);
+  top = base;
+
+  while (curr < branches)
+    {
+      auto working = std::make_shared<Doodad>(1.0f,
+                                              1.0f,
+                                              1.0f,
+                                              1.0f,
+                                              1.0f,
+                                              shader);
+      auto rolled = rng.next();
+      if (rolled == takenLast) continue;
+      takenLast = rolled;
+
+      top->insert(working, (DoodadMount) rolled);
+
+      top = working;
+      ++curr;
+    }
+  p1 = top;
+  return base;
 }

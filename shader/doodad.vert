@@ -13,7 +13,8 @@ uniform mat4 M;
 
 out vec3 normalToFrag;
 out vec3 posToFrag;
-out vec3 texCoordToFrag;
+out vec3 innerTexCoordToFrag;
+out vec3 outerTexCoordToFrag;
 
 void main()
 {
@@ -23,4 +24,6 @@ void main()
                                 1.0);
     normalToFrag = mat3(transpose(inverse(M))) * normalToVert;
     posToFrag = (vec3(M * vec4(positionToVert, 1.0f)));
+    innerTexCoordToFrag = vec3(PV * M * (vec4(positionToVert, 1.0)));
+    outerTexCoordToFrag = vec3(vec4(positionToVert, 1.0));
 }
