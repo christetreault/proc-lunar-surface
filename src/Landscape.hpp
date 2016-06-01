@@ -52,7 +52,7 @@ public:
             float topRight,
             float bottomLeft,
             float bottomRight);
-  HeightMap(const char * ppm);
+  HeightMap(unsigned int seed, const char * ppm);
 
   size_t width;
   std::vector<float> elevations;

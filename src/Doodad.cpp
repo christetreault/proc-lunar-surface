@@ -2,15 +2,13 @@
 
 static const char * texPath = "res/textures/iridescent.jpg";
 
-static const char * vertPath = "shader/doodad.vert";
-static const char * fragPath = "shader/doodad.frag";
-
 // ---------------------------------------------------------
 // Doodad --------------------------------------------------
 // ---------------------------------------------------------
 
-Doodad::Doodad(float length, float topScale, float bottomScale)
-  : model(std::make_shared<Segment>(length, topScale, bottomScale)),
+Doodad::Doodad(float length, float topScale, float bottomScale,
+         std::shared_ptr<Shader> inShader)
+  : model(std::make_shared<Segment>(length, topScale, bottomScale, inShader)),
     center(nullptr), topRight(nullptr), topLeft(nullptr),
     bottomRight(nullptr), bottomLeft(nullptr)
 {}
@@ -124,8 +122,10 @@ static glm::vec3 genNormal(std::vector<glm::vec3> & verts,
   return glm::normalize((n1 + n2 + n3 + n4) / 4.0f);
 }
 
-Segment::Segment(float length, float topScale, float bottomScale)
-  : tex(texPath, texPath, texPath, texPath, texPath, texPath),
+Segment::Segment(float length, float topScale, float bottomScale,
+         std::shared_ptr<Shader> inShader)
+  : shader(inShader),
+    tex(texPath, texPath, texPath, texPath, texPath, texPath),
     VAO(0), VBO(0), EBO(0)
 {
   std::vector<glm::vec3> verts;
@@ -261,10 +261,6 @@ Segment::Segment(float length, float topScale, float bottomScale)
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
-
-  // Shaders
-
-  shader = std::make_shared<Shader>(vertPath, fragPath);
 }
 
 void Segment::draw()

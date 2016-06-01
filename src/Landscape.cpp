@@ -7,9 +7,16 @@ static const char * stonePath = "res/textures/moonStone.jpg";
 static const char * gravelPath = "res/textures/gravel.jpg";
 static const char * depositPath = "res/textures/iridescent.jpg";
 
+static const char * terrainPath = "res/terrain/SanDiegoTerrain.tga";
+
 // ---------------------------------------------------------
 // LandscapeBuilder ----------------------------------------
 // ---------------------------------------------------------
+
+LandscapeBuilder::LandscapeBuilder(int seed, const char * ppm)
+  : seedGen(seed)
+{
+}
 
 LandscapeBuilder::LandscapeBuilder(int seed)
   : seedGen(seed)
@@ -32,12 +39,15 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   root->insert(baseScale);
 
   // TODO: For testing. Much of this shoul prob move genCity
-  auto test = std::make_shared<Doodad>(2.0f, 1.0f, 0.5f);
-  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f),
+
+  auto ddShader = std::make_shared<Shader>(ddVertPath, ddFragPath);
+
+  auto test = std::make_shared<Doodad>(2.0f, 1.0f, 0.5f, ddShader);
+  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
                DoodadMount::topRight);
-  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f),
+  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
                DoodadMount::bottomLeft);
-  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f),
+  test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
                DoodadMount::center);
   auto cityScale = std::make_shared<Transform>(test,
                                                glm::scale(glm::mat4(),
@@ -54,6 +64,8 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
 
 std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
 {
+  //HeightMap hm(seedGen.next(), terrainPath);;
+
   size_t n = 6;
 
   RNG cornerRNG(seedGen.next(), -0.5, 0.5);
@@ -104,6 +116,55 @@ HeightMap::HeightMap(unsigned int seed,
   assign<float>(elevations, width, br, bottomRight);
 
   diamondSquare(n, 0.5f, seed, tl, tr, bl, br);
+
+  auto bsWidth = width / 4;
+  IntRNG offsetRNG(seed, 1, (bsWidth * 2) - 1);
+  auto offsetX = offsetRNG.next();
+  auto offsetY = offsetRNG.next();
+
+  buildSiteCenter = glm::uvec2(offsetX + (bsWidth / 2),
+                               offsetY + (bsWidth / 2));
+
+  auto average = (index<float>(elevations, width, offsetX, offsetY)
+                  + index<float>(elevations, width, offsetX + bsWidth, offsetY)
+                  + index<float>(elevations, width, offsetX, offsetY + bsWidth)
+                  + index<float>(elevations, width,
+                                 offsetX + bsWidth, offsetY + bsWidth))
+    / 4.0f;
+
+  for (size_t x = offsetX; x <= offsetX + bsWidth; ++x)
+    {
+      for (size_t y = offsetY; y <= offsetY + bsWidth; ++y)
+        {
+          assign<float>(elevations, width, x, y, average);
+        }
+    }
+}
+
+HeightMap::HeightMap(unsigned int seed, const char * ppm)
+{
+  int iwidth, iheight, ichannels;
+  unsigned char * bytes = SOIL_load_image
+    (
+     ppm,
+     &iwidth, &iheight, &ichannels,
+     SOIL_LOAD_L
+     );
+
+  for (int x = 0; x < iwidth; ++x)
+    {
+      for (int y = 0; y < iheight; ++y)
+        {
+          //std::cerr << "x:y = " << x << ":" << y << std::endl;
+          float curr = (float) bytes[y * iwidth + x];
+          elevations.push_back(mapRange(curr, 0, 255, 0, 0.1));
+          //std::cerr << "curr: " << (mapRange(curr, 0, 255, 0, 1)) << std::endl;
+        }
+    }
+
+  SOIL_free_image_data(bytes);
+
+  width = iwidth;
 
   auto bsWidth = width / 4;
   IntRNG offsetRNG(seed, 1, (bsWidth * 2) - 1);
@@ -389,7 +450,7 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
           float xf = (float) x * spacing;
           if (xf > maxX) maxX = xf;
           if (xf < minX) minX = xf;
-          float yf = index<float>(heights, width, x, z);
+          float yf = index<float>(heights, width, x, z);// * spacing;
           if (yf > maxY) maxY = yf;
           if (yf < minY) minY = yf;
           float zf = (float) z * spacing;
