@@ -374,12 +374,12 @@ glm::mat4 Segment::getMountPoint(DoodadMount where)
 // Segment Primitives --------------------------------------
 // ---------------------------------------------------------
 
-std::shared_ptr<Doodad> verticalBulge(int seed,
-                                      std::shared_ptr<Shader> shader,
-                                      std::shared_ptr<Transform> & p1,
-                                      std::shared_ptr<Transform> & p2,
-                                      std::shared_ptr<Transform> & p3,
-                                      std::shared_ptr<Transform> & p4)
+std::shared_ptr<Doodad> scepter(int seed,
+                                std::shared_ptr<Shader> shader,
+                                std::shared_ptr<Transform> & p1,
+                                std::shared_ptr<Transform> & p2,
+                                std::shared_ptr<Transform> & p3,
+                                std::shared_ptr<Transform> & p4)
 {
   std::vector<unsigned int> taken;
   IntRNG rng(seed, 1, 4);
@@ -461,12 +461,13 @@ std::shared_ptr<Doodad> verticalBulge(int seed,
   return base;
 }
 
-std::shared_ptr<Doodad> spiralBranch(int seed,
-                                     std::shared_ptr<Shader> shader,
-                                     std::shared_ptr<Doodad> & p1)
+std::shared_ptr<Doodad> angryTentacle(int seed,
+                                      size_t minSegs,
+                                      std::shared_ptr<Shader> shader,
+                                      std::shared_ptr<Doodad> & p1)
 {
   IntRNG rng(seed, 0, 4);
-  auto branches = rng.next() + 3;
+  auto branches = rng.next() + minSegs;
   size_t curr = 0;
   size_t takenLast = 0;
 
@@ -495,4 +496,32 @@ std::shared_ptr<Doodad> spiralBranch(int seed,
     }
   p1 = top;
   return base;
+}
+
+std::shared_ptr<Group> fanout(float theta,
+                              std::shared_ptr<Transform> & p1,
+                              std::shared_ptr<Transform> & p2,
+                              std::shared_ptr<Transform> & p3)
+{
+  auto fan = std::make_shared<Group>();
+
+  auto rotX = glm::rotate(glm::mat4(),
+                          theta,
+                          glm::vec3(1.0f, 0.0f, 0.0f));
+  auto thetaInc = (2.0f * glm::pi<float>()) / 3.0f;
+
+  p1 = std::make_shared<Transform>(nullptr,
+                                   rotX);
+  auto rotY2 = glm::rotate(glm::mat4(),
+                           thetaInc,
+                           glm::vec3(0.0f, 1.0f, 0.0f)) * rotX;
+  auto rotY3 = glm::rotate(glm::mat4(),
+                           thetaInc * 2.0f,
+                           glm::vec3(0.0f, 1.0f, 0.0f)) * rotX;
+  p2 = std::make_shared<Transform>(nullptr, rotY2);
+  p3 = std::make_shared<Transform>(nullptr, rotY3);
+  fan->insert(p1);
+  fan->insert(p2);
+  fan->insert(p3);
+  return fan;
 }

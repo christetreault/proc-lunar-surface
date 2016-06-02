@@ -54,35 +54,55 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   std::shared_ptr<Transform> p2 = nullptr;
   std::shared_ptr<Transform> p3 = nullptr;
   std::shared_ptr<Transform> p4 = nullptr;
-  auto test = verticalBulge(seedGen.next(),
-                            ddShader,
-                            p1, p2, p3, p4);
+  auto test = fanout(glm::pi<float>() / 4.0f, p1, p2, p3);
+  //auto test = scepter(seedGen.next(),
+  //                    ddShader,
+  //                    p1, p2, p3, p4);
 
-  std::shared_ptr<Doodad> n1 = nullptr;
+  std::shared_ptr<Transform> n1 = nullptr;
+  std::shared_ptr<Transform> n2 = nullptr;
+  std::shared_ptr<Transform> n3 = nullptr;
+  std::shared_ptr<Transform> n4 = nullptr;
 
   if (p1 != nullptr)
     {
-      p1->insert(spiralBranch(seedGen.next(),
-                              ddShader,
-                              n1));
+      p1->insert(scepter(seedGen.next(),
+                         ddShader,
+                         n1, n2, n3, n4));
+      //p1->insert(angryTentacle(seedGen.next(),
+      //                         3,
+      //                         ddShader,
+      //                         n1));
     }
   if (p2 != nullptr)
     {
-      p2->insert(spiralBranch(seedGen.next(),
-                              ddShader,
-                              n1));
+      p2->insert(scepter(seedGen.next(),
+                         ddShader,
+                         n1, n2, n3, n4));
+      //p2->insert(angryTentacle(seedGen.next(),
+      //                         3,
+      //                         ddShader,
+      //                         n1));
     }
   if (p3 != nullptr)
     {
-      p3->insert(spiralBranch(seedGen.next(),
-                              ddShader,
-                              n1));
+      p3->insert(scepter(seedGen.next(),
+                         ddShader,
+                         n1, n2, n3, n4));
+      //p3->insert(angryTentacle(seedGen.next(),
+      //                         3,
+      //                         ddShader,
+      //                         n1));
     }
   if (p4 != nullptr)
     {
-      p4->insert(spiralBranch(seedGen.next(),
-                              ddShader,
-                              n1));
+      p4->insert(scepter(seedGen.next(),
+                         ddShader,
+                         n1, n2, n3, n4));
+      //p4->insert(angryTentacle(seedGen.next(),
+      //                         3,
+      //                         ddShader,
+      //                         n1));
     }
 
   auto cityScale = std::make_shared<Transform>(test,

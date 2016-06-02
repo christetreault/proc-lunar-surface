@@ -86,15 +86,21 @@ private:
 
 };
 
-std::shared_ptr<Doodad> verticalBulge(int seed,
-                                      std::shared_ptr<Shader> shader,
-                                      std::shared_ptr<Transform> & p1,
-                                      std::shared_ptr<Transform> & p2,
-                                      std::shared_ptr<Transform> & p3,
-                                      std::shared_ptr<Transform> & p4);
+std::shared_ptr<Doodad> scepter(int seed,
+                                std::shared_ptr<Shader> shader,
+                                std::shared_ptr<Transform> & p1,
+                                std::shared_ptr<Transform> & p2,
+                                std::shared_ptr<Transform> & p3,
+                                std::shared_ptr<Transform> & p4);
 
-std::shared_ptr<Doodad> spiralBranch(int seed,
-                                     std::shared_ptr<Shader> shader,
-                                     std::shared_ptr<Doodad> & p1);
+std::shared_ptr<Doodad> angryTentacle(int seed,
+                                      size_t minSegs,
+                                      std::shared_ptr<Shader> shader,
+                                      std::shared_ptr<Doodad> & p1);
+
+std::shared_ptr<Group> fanout(float theta,
+                              std::shared_ptr<Transform> & p1,
+                              std::shared_ptr<Transform> & p2,
+                              std::shared_ptr<Transform> & p3);
 
 #endif
