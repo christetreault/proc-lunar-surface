@@ -50,12 +50,18 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   //test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
   //             DoodadMount::center);
 
-  std::shared_ptr<Transform> p1 = nullptr;
-  std::shared_ptr<Transform> p2 = nullptr;
+  std::shared_ptr<Doodad> p1 = nullptr;
+  std::shared_ptr<Doodad> p2 = nullptr;
   std::shared_ptr<Transform> p3 = nullptr;
   std::shared_ptr<Transform> p4 = nullptr;
-  auto test = fanout(glm::pi<float>() / 4.0f, p1, p2, p3);
+
+  auto test = fork(seedGen.next(),
+                   glm::pi<float>() / 3.0f,
+                   ddShader,
+                   p1, p2);
+  //auto test = fanout(seedGen.next(), glm::pi<float>() / 4.0f, p1, p2, p3);
   //auto test = scepter(seedGen.next(),
+  //                    0.5f,
   //                    ddShader,
   //                    p1, p2, p3, p4);
 
@@ -67,8 +73,10 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   if (p1 != nullptr)
     {
       p1->insert(scepter(seedGen.next(),
+                         0.5f,
                          ddShader,
-                         n1, n2, n3, n4));
+                         n1, n2, n3, n4),
+                 DoodadMount::center);
       //p1->insert(angryTentacle(seedGen.next(),
       //                         3,
       //                         ddShader,
@@ -77,8 +85,10 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   if (p2 != nullptr)
     {
       p2->insert(scepter(seedGen.next(),
+                         0.5f,
                          ddShader,
-                         n1, n2, n3, n4));
+                         n1, n2, n3, n4),
+                 DoodadMount::center);
       //p2->insert(angryTentacle(seedGen.next(),
       //                         3,
       //                         ddShader,
@@ -87,6 +97,7 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   if (p3 != nullptr)
     {
       p3->insert(scepter(seedGen.next(),
+                         0.5f,
                          ddShader,
                          n1, n2, n3, n4));
       //p3->insert(angryTentacle(seedGen.next(),
@@ -97,6 +108,7 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   if (p4 != nullptr)
     {
       p4->insert(scepter(seedGen.next(),
+                         0.5f,
                          ddShader,
                          n1, n2, n3, n4));
       //p4->insert(angryTentacle(seedGen.next(),

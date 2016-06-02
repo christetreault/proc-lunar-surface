@@ -375,32 +375,16 @@ glm::mat4 Segment::getMountPoint(DoodadMount where)
 // ---------------------------------------------------------
 
 std::shared_ptr<Doodad> scepter(int seed,
+                                float scaleFactor,
                                 std::shared_ptr<Shader> shader,
                                 std::shared_ptr<Transform> & p1,
                                 std::shared_ptr<Transform> & p2,
                                 std::shared_ptr<Transform> & p3,
                                 std::shared_ptr<Transform> & p4)
 {
-  std::vector<unsigned int> taken;
   IntRNG rng(seed, 1, 4);
 
-  auto amt = rng.next();
-  size_t placed = 0;
 
-  while (placed < amt)
-    {
-      auto curr = rng.next();
-      if (std::find(taken.begin(), taken.end(), curr) == taken.end())
-        {
-          taken.push_back(curr);
-          ++placed;
-        }
-    }
-
-  p1 = nullptr;
-  p2 = nullptr;
-  p3 = nullptr;
-  p4 = nullptr;
 
   auto base = std::make_shared<Doodad>(4.0f,
                                        1.5f,
@@ -425,38 +409,31 @@ std::shared_ptr<Doodad> scepter(int seed,
   base->insert(center, DoodadMount::center);
   center->insert(top, DoodadMount::center);
 
-  auto scaleVec = glm::vec3(0.5f, 0.5f, 0.5f);
+  auto scaleVec = glm::vec3(scaleFactor,
+                            scaleFactor,
+                            scaleFactor);
 
-  for (const auto & curr : taken)
-    {
-      switch (curr)
-        {
-        case 1:
-          p1 = std::make_shared<Transform>(nullptr,
-                                           glm::scale(glm::mat4(),
-                                                      scaleVec));
-          center->insert(p1, (DoodadMount) curr);
-          break;
-        case 2:
-          p2 = std::make_shared<Transform>(nullptr,
-                                           glm::scale(glm::mat4(),
-                                                      scaleVec));
-          center->insert(p2, (DoodadMount) curr);
-          break;
-        case 3:
-          p3 = std::make_shared<Transform>(nullptr,
-                                           glm::scale(glm::mat4(),
-                                                      scaleVec));
-          center->insert(p3, (DoodadMount) curr);
-          break;
-        case 4:
-          p4 = std::make_shared<Transform>(nullptr,
-                                           glm::scale(glm::mat4(),
-                                                      scaleVec));
-          center->insert(p4, (DoodadMount) curr);
-          break;
-        }
-    }
+
+  p1 = std::make_shared<Transform>(nullptr,
+                                   glm::scale(glm::mat4(),
+                                              scaleVec));
+  center->insert(p1, (DoodadMount) 1);
+
+  p2 = std::make_shared<Transform>(nullptr,
+                                   glm::scale(glm::mat4(),
+                                              scaleVec));
+  center->insert(p2, (DoodadMount) 2);
+
+  p3 = std::make_shared<Transform>(nullptr,
+                                   glm::scale(glm::mat4(),
+                                              scaleVec));
+  center->insert(p3, (DoodadMount) 3);
+
+  p4 = std::make_shared<Transform>(nullptr,
+                                   glm::scale(glm::mat4(),
+                                              scaleVec));
+  center->insert(p4, (DoodadMount) 4);
+
 
   return base;
 }
@@ -498,30 +475,78 @@ std::shared_ptr<Doodad> angryTentacle(int seed,
   return base;
 }
 
-std::shared_ptr<Group> fanout(float theta,
+std::shared_ptr<Group> fanout(int seed,
+                              float theta,
                               std::shared_ptr<Transform> & p1,
                               std::shared_ptr<Transform> & p2,
                               std::shared_ptr<Transform> & p3)
 {
+  RNG rng(seed, -0.5f, 0.5f);
   auto fan = std::make_shared<Group>();
 
-  auto rotX = glm::rotate(glm::mat4(),
-                          theta,
-                          glm::vec3(1.0f, 0.0f, 0.0f));
+  auto rotX1 = glm::rotate(glm::mat4(),
+                           theta + rng.next(),
+                           glm::vec3(1.0f, 0.0f, 0.0f));
   auto thetaInc = (2.0f * glm::pi<float>()) / 3.0f;
 
   p1 = std::make_shared<Transform>(nullptr,
-                                   rotX);
+                                   rotX1);
+  auto rotX2 = glm::rotate(glm::mat4(),
+                           theta + rng.next(),
+                           glm::vec3(1.0f, 0.0f, 0.0f));
   auto rotY2 = glm::rotate(glm::mat4(),
                            thetaInc,
-                           glm::vec3(0.0f, 1.0f, 0.0f)) * rotX;
+                           glm::vec3(0.0f, 1.0f, 0.0f)) * rotX2;
+  auto rotX3 = glm::rotate(glm::mat4(),
+                           theta + rng.next(),
+                           glm::vec3(1.0f, 0.0f, 0.0f));
   auto rotY3 = glm::rotate(glm::mat4(),
                            thetaInc * 2.0f,
-                           glm::vec3(0.0f, 1.0f, 0.0f)) * rotX;
+                           glm::vec3(0.0f, 1.0f, 0.0f)) * rotX3;
   p2 = std::make_shared<Transform>(nullptr, rotY2);
   p3 = std::make_shared<Transform>(nullptr, rotY3);
   fan->insert(p1);
   fan->insert(p2);
   fan->insert(p3);
   return fan;
+}
+
+std::shared_ptr<Group> fork(int seed,
+                            float theta,
+                            std::shared_ptr<Shader> ddShader,
+                            std::shared_ptr<Doodad> & l,
+                            std::shared_ptr<Doodad> & r)
+{
+  RNG rng(seed, -0.5f, 0.5f);
+  float thetaL = (theta / 2.0f);
+  float thetaR = -(theta / 2.0f);
+
+  auto base = std::make_shared<Group>();
+  l = std::make_shared<Doodad>(2.0f + rng.next(),
+                               1.0f + (rng.next() * 0.5f),
+                               1.0f,
+                               0.5f + (rng.next() * 0.1f),
+                               0.5f,
+                               ddShader);
+  auto xformL = std::make_shared<Transform>(l,
+                                            glm::rotate(glm::mat4(),
+                                                        thetaL,
+                                                        glm::vec3(1.0f,
+                                                                  0.0f,
+                                                                  0.0f)));
+  r = std::make_shared<Doodad>(2.0f + rng.next(),
+                               1.0f + (rng.next() * 0.5f),
+                               1.0f,
+                               0.5f + (rng.next() * 0.1f),
+                               0.5f,
+                               ddShader);
+  auto xformR = std::make_shared<Transform>(r,
+                                            glm::rotate(glm::mat4(),
+                                                        thetaR,
+                                                        glm::vec3(1.0f,
+                                                                  0.0f,
+                                                                  0.0f)));
+  base->insert(xformL);
+  base->insert(xformR);
+  return base;
 }
