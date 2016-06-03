@@ -57,14 +57,12 @@ vec4 lightTexture(vec4 tex, Material mat)
 
 void main()
 {
-  //color = vec4(normalize(normalToFrag), 1.0f);
-  //return;
   Material crystal = Material(vec4(0.8, 0.8, 0.8, 1.0),
                               vec4(1.0, 1.0, 1.0, 1.0),
                               vec4(1.0, 1.0, 1.0, 1.0),
                               76.8);
   vec3 texCoord = vec3(innerTexCoordToFrag.x + cos(time),
-                       innerTexCoordToFrag.y + cos(time / 2.0),
+                       innerTexCoordToFrag.y + cos(time),
                        innerTexCoordToFrag.z);
 
   vec4 usingNormal = texture(tex, normalize(outerTexCoordToFrag));
@@ -73,8 +71,9 @@ void main()
                            (usingNormal.x + usingNormal.y + usingNormal.z) / 3,
                            1.0) * 2.0;
 
+
   color = lightTexture(mix(surfaceColor,
                            texture(tex, texCoord),
-                           0.9),
+                           0.8),
                        crystal);
 }

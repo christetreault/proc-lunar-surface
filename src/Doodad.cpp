@@ -374,17 +374,319 @@ glm::mat4 Segment::getMountPoint(DoodadMount where)
 // Segment Primitives --------------------------------------
 // ---------------------------------------------------------
 
-std::shared_ptr<Doodad> scepter(int seed,
-                                float scaleFactor,
-                                std::shared_ptr<Shader> shader,
-                                std::shared_ptr<Transform> & p1,
-                                std::shared_ptr<Transform> & p2,
-                                std::shared_ptr<Transform> & p3,
-                                std::shared_ptr<Transform> & p4)
+std::shared_ptr<Grammar> parse(std::string inStr)
+{
+  using namespace boost;
+
+  if (inStr.size() == 0) return nullptr;
+
+  auto str = inStr;
+  auto curr = std::make_shared<Grammar>();
+  curr->lhs = nullptr;
+  curr->rhs = nullptr;
+
+  std::string lhs;
+  std::string rhs;
+
+  char_separator<char> sep(" \t\r\n,()");
+  tokenizer<char_separator<char>> tokens(str, sep);
+  auto iter = tokens.begin();
+
+  curr->ctor = ((*iter)[0]);
+  ++iter;
+
+  switch (curr->ctor)
+    {
+    case 'C':
+    case 'D':
+      curr->args.push_back(stof(*iter));
+      ++iter;
+      curr->args.push_back(stof(*iter));
+      ++iter;
+      curr->args.push_back(stof(*iter));
+      ++iter;
+      curr->args.push_back(stof(*iter));
+      ++iter;
+      curr->args.push_back(stof(*iter));
+      ++iter;
+      if (iter != tokens.end())
+        {
+          std::cerr << "too many args! s = " << inStr << std::endl;
+          assert(false);
+        }
+      break;
+    case 'S':
+    case 'T':
+    case 'F':
+    case 'K':
+      curr->args.push_back(stof(*iter));
+      ++iter;
+      if (iter != tokens.end())
+        {
+          std::cerr << "too many args! s = " << inStr << std::endl;
+          assert(false);
+        }
+      break;
+    case 'A':
+      str = inStr.substr(2, inStr.length() - 2);
+      lhs = str.substr(0, str.find(")") + 1);
+      //std::cerr << "LHS = " << lhs << std::endl;
+      rhs = str.substr(str.find(")") + 2, str.length());
+      //std::cerr << "RHS = " << rhs << std::endl;
+      //sep = char_separator<char>(";\t\r\n");
+      //tokens = tokenizer<char_separator<char>>(str, sep);
+      //iter = tokens.begin();
+      curr->lhs = parse(lhs);//*iter);
+      //++iter;
+      curr->rhs = parse(rhs);//*iter);
+      //++iter;
+      //if (iter != tokens.end())
+      //  {
+      //    std::cerr << "too many args! s = " << inStr << std::endl;
+      //    assert(false);
+      //  }
+      break;
+    default:
+      std::cerr << "Invalid ctor: " << curr->ctor;
+      assert(false);
+    }
+  return curr;
+}
+
+std::string toString(std::shared_ptr<Grammar> g)
+{
+  std::ostringstream s;
+
+  if (g == nullptr) return "";
+
+  s << g->ctor << "(";
+
+  if (g->ctor == 'A')
+    {
+      s << toString(g->lhs)
+        << ", "
+        << toString(g->rhs)
+        << ")";
+      return s.str();
+    }
+
+  s << g->args[0];
+
+  for (size_t count = 1; count < g->args.size(); ++count)
+    {
+      s << ", " << g->args[count];
+    }
+  s << ")";
+
+  return s.str();
+}
+
+std::shared_ptr<Grammar> iterate(size_t n, std::shared_ptr<Grammar> g)
+{
+  if (n == 0) return g;
+
+  auto retVal = std::make_shared<Grammar>();
+
+  switch (g->ctor)
+    {
+    case 'D':
+      retVal->ctor = 'A';
+      retVal->lhs = g;
+      retVal->rhs = iterate(n - 1,
+                            parse("A((K(1), C(2,1,1,1,1)"));
+      break;
+    case 'C':
+      retVal->ctor = 'A';
+      retVal->lhs = g;
+      retVal->rhs = iterate(n - 1, parse("A(F(0.75), T(3)"));
+      break;
+    case 'T':
+      retVal->ctor = 'A';
+      retVal->lhs = g;
+      if (n > 1) retVal->rhs = iterate(n - 1, parse("T(1)"));
+      else retVal->rhs = iterate(n - 1, parse("S(0.5)"));
+      break;
+    case 'S':
+      retVal->ctor = 'A';
+      retVal->lhs = g;
+      retVal->rhs = iterate(n - 1, parse("D(3,2,1,1,1)"));
+      break;
+    case 'F':
+    case 'K':
+      retVal = g;
+      break;
+    case 'A':
+      retVal->ctor = 'A';
+      retVal->lhs = g->lhs;
+      retVal->rhs = iterate(n, g->rhs);
+      break;
+    }
+  return retVal;
+}
+
+std::shared_ptr<Group> eval(std::shared_ptr<Grammar> g,
+                            int inSeed,
+                            std::shared_ptr<Shader> shader)
+{
+  std::shared_ptr<Group> res;
+
+  IntRNG rng(inSeed);
+
+  bool centerOnly = false;
+  std::shared_ptr<Transform> t1 = nullptr;
+  std::shared_ptr<Transform> t2 = nullptr;
+  std::shared_ptr<Transform> t3 = nullptr;
+  std::shared_ptr<Transform> t4 = nullptr;
+  std::shared_ptr<Doodad> d1 = nullptr;
+  //std::shared_ptr<Doodad> d2 = nullptr;
+
+  if(g->ctor == 'A')
+    {
+      switch (g->lhs->ctor)
+        {
+        case 'C':
+          centerOnly = true;
+        case 'D':
+          res = std::make_shared<Group>();
+          d1 = std::make_shared<Doodad>(g->lhs->args[0],
+                                        g->lhs->args[1],
+                                        g->lhs->args[2],
+                                        g->lhs->args[3],
+                                        g->lhs->args[4],
+                                        shader);
+          res->insert(d1);
+          break;
+        case 'S':
+          res = scepter(rng.next(),
+                        g->lhs->args[0],
+                        shader,
+                        t1, t2, t3, t4);
+          break;
+        case 'T':
+          centerOnly = true;
+          res = angryTentacle(rng.next(),
+                              (size_t) g->lhs->args[0],
+                              shader,
+                              d1);
+          break;
+        case 'F':
+          res = fanout(rng.next(),
+                       g->lhs->args[0],
+                       t1,
+                       t2,
+                       t3);
+          break;
+        case 'K':
+          res = fork(rng.next(),
+                     g->lhs->args[0],
+                     //shader,
+                     t1,
+                     t2);
+          break;
+        case 'A':
+          std::cerr << "forall on LHS, this should never happen!"
+                    << std::endl;
+          assert(false);
+        }
+      if (t1 != nullptr)
+        {
+          t1->insert(eval(g->rhs,
+                          rng.next(),
+                          shader));
+        }
+      if (t2 != nullptr)
+        {
+          t2->insert(eval(g->rhs,
+                          rng.next(),
+                          shader));
+        }
+      if (t3 != nullptr)
+        {
+          t3->insert(eval(g->rhs,
+                          rng.next(),
+                          shader));
+        }
+      if (t4 != nullptr)
+        {
+          t4->insert(eval(g->rhs,
+                          rng.next(),
+                          shader));
+        }
+      if (d1 != nullptr)
+        {
+          if (centerOnly)
+            {
+              d1->insert(eval(g->rhs,
+                              rng.next(),
+                              shader),
+                         DoodadMount::center);
+            }
+          else
+            {
+              for (size_t count = 0; count < 5; ++count)
+                {
+                  d1->insert(eval(g->rhs,
+                                  rng.next(),
+                                  shader),
+                             (DoodadMount) count);
+                }
+            }
+        }
+    }
+  else
+    {
+      switch (g->ctor)
+        {
+        case 'D':
+        case 'C':
+          res = std::make_shared<Group>();
+          res->insert(std::make_shared<Doodad>(g->args[0],
+                                               g->args[1],
+                                               g->args[2],
+                                               g->args[3],
+                                               g->args[4],
+                                               shader));
+
+          break;
+        case 'S':
+          res = scepter(rng.next(),
+                        g->args[0],
+                        shader,
+                        t1, t2, t3, t4);
+          break;
+        case 'T':
+          res = angryTentacle(rng.next(),
+                              (size_t) g->args[0],
+                              shader,
+                              d1);
+          break;
+        case 'F':
+          res = fanout(rng.next(),
+                       g->args[0],
+                       t1,
+                       t2,
+                       t3);
+          break;
+        case 'K':
+          res = fork(rng.next(),
+                     g->args[0],
+                     t1,
+                     t2);
+          break;
+        }
+    }
+  return res;
+}
+
+std::shared_ptr<Transform> scepter(int seed,
+                                   float scaleFactor,
+                                   std::shared_ptr<Shader> shader,
+                                   std::shared_ptr<Transform> & p1,
+                                   std::shared_ptr<Transform> & p2,
+                                   std::shared_ptr<Transform> & p3,
+                                   std::shared_ptr<Transform> & p4)
 {
   IntRNG rng(seed, 1, 4);
-
-
 
   auto base = std::make_shared<Doodad>(4.0f,
                                        1.5f,
@@ -434,8 +736,10 @@ std::shared_ptr<Doodad> scepter(int seed,
                                               scaleVec));
   center->insert(p4, (DoodadMount) 4);
 
-
-  return base;
+  auto scale = std::make_shared<Transform>(base,
+                                           glm::scale(glm::mat4(),
+                                                      {1.0f,1.0f,1.0f}));
+  return scale;
 }
 
 std::shared_ptr<Doodad> angryTentacle(int seed,
@@ -513,40 +817,42 @@ std::shared_ptr<Group> fanout(int seed,
 
 std::shared_ptr<Group> fork(int seed,
                             float theta,
-                            std::shared_ptr<Shader> ddShader,
-                            std::shared_ptr<Doodad> & l,
-                            std::shared_ptr<Doodad> & r)
+                            std::shared_ptr<Transform> & l,
+                            std::shared_ptr<Transform> & r)
 {
   RNG rng(seed, -0.5f, 0.5f);
   float thetaL = (theta / 2.0f);
   float thetaR = -(theta / 2.0f);
 
   auto base = std::make_shared<Group>();
-  l = std::make_shared<Doodad>(2.0f + rng.next(),
-                               1.0f + (rng.next() * 0.5f),
-                               1.0f,
-                               0.5f + (rng.next() * 0.1f),
-                               0.5f,
-                               ddShader);
-  auto xformL = std::make_shared<Transform>(l,
-                                            glm::rotate(glm::mat4(),
-                                                        thetaL,
-                                                        glm::vec3(1.0f,
-                                                                  0.0f,
-                                                                  0.0f)));
-  r = std::make_shared<Doodad>(2.0f + rng.next(),
-                               1.0f + (rng.next() * 0.5f),
-                               1.0f,
-                               0.5f + (rng.next() * 0.1f),
-                               0.5f,
-                               ddShader);
-  auto xformR = std::make_shared<Transform>(r,
-                                            glm::rotate(glm::mat4(),
-                                                        thetaR,
-                                                        glm::vec3(1.0f,
-                                                                  0.0f,
-                                                                  0.0f)));
-  base->insert(xformL);
-  base->insert(xformR);
+  l = std::make_shared<Transform>(nullptr,
+                                  glm::rotate(glm::mat4(),
+                                              thetaL,
+                                              glm::vec3(1.0f,
+                                                        0.0f,
+                                                        0.0f)));
+  r = std::make_shared<Transform>(nullptr,
+                                  glm::rotate(glm::mat4(),
+                                              thetaR,
+                                              glm::vec3(1.0f,
+                                                        0.0f,
+                                                        0.0f)));
+  base->insert(l);
+  base->insert(r);
   return base;
+}
+
+std::string baseOne()
+{
+  return "A(C(6,1,1,1,1), D(1.0f, 3.0f, 2.5f, 0.5f, 1.0f))";
+}
+
+std::string baseTwo()
+{
+  return "A(C(6,1,1,1,1), A(F(1), S(1)))";
+}
+
+std::string baseThree()
+{
+  return "A(S(1), A(K(1), T(3))";
 }

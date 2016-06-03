@@ -42,80 +42,10 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
 
   auto ddShader = std::make_shared<Shader>(ddVertPath, ddFragPath);
 
-  //auto test = std::make_shared<Doodad>(2.0f, 1.0f, 0.5f, ddShader);
-  //test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
-  //             DoodadMount::topRight);
-  //test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
-  //             DoodadMount::bottomLeft);
-  //test->insert(std::make_shared<Doodad>(4.0f, 0.5f, 0.5f, ddShader),
-  //             DoodadMount::center);
 
-  std::shared_ptr<Doodad> p1 = nullptr;
-  std::shared_ptr<Doodad> p2 = nullptr;
-  std::shared_ptr<Transform> p3 = nullptr;
-  std::shared_ptr<Transform> p4 = nullptr;
-
-  auto test = fork(seedGen.next(),
-                   glm::pi<float>() / 3.0f,
-                   ddShader,
-                   p1, p2);
-  //auto test = fanout(seedGen.next(), glm::pi<float>() / 4.0f, p1, p2, p3);
-  //auto test = scepter(seedGen.next(),
-  //                    0.5f,
-  //                    ddShader,
-  //                    p1, p2, p3, p4);
-
-  std::shared_ptr<Transform> n1 = nullptr;
-  std::shared_ptr<Transform> n2 = nullptr;
-  std::shared_ptr<Transform> n3 = nullptr;
-  std::shared_ptr<Transform> n4 = nullptr;
-
-  if (p1 != nullptr)
-    {
-      p1->insert(scepter(seedGen.next(),
-                         0.5f,
-                         ddShader,
-                         n1, n2, n3, n4),
-                 DoodadMount::center);
-      //p1->insert(angryTentacle(seedGen.next(),
-      //                         3,
-      //                         ddShader,
-      //                         n1));
-    }
-  if (p2 != nullptr)
-    {
-      p2->insert(scepter(seedGen.next(),
-                         0.5f,
-                         ddShader,
-                         n1, n2, n3, n4),
-                 DoodadMount::center);
-      //p2->insert(angryTentacle(seedGen.next(),
-      //                         3,
-      //                         ddShader,
-      //                         n1));
-    }
-  if (p3 != nullptr)
-    {
-      p3->insert(scepter(seedGen.next(),
-                         0.5f,
-                         ddShader,
-                         n1, n2, n3, n4));
-      //p3->insert(angryTentacle(seedGen.next(),
-      //                         3,
-      //                         ddShader,
-      //                         n1));
-    }
-  if (p4 != nullptr)
-    {
-      p4->insert(scepter(seedGen.next(),
-                         0.5f,
-                         ddShader,
-                         n1, n2, n3, n4));
-      //p4->insert(angryTentacle(seedGen.next(),
-      //                         3,
-      //                         ddShader,
-      //                         n1));
-    }
+  auto g = baseThree();
+  std::cerr << "g = " << toString(iterate(2,parse(g))) << std::endl;
+  auto test = eval(iterate(2,parse(g)), seedGen.next(), ddShader);
 
   auto cityScale = std::make_shared<Transform>(test,
                                                glm::scale(glm::mat4(),

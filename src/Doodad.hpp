@@ -3,6 +3,8 @@
 
 #include <glm/glm.hpp>
 #include <GL/glew.h>
+#include <boost/tokenizer.hpp>
+#include <sstream>
 #include "SceneGraph.hpp"
 #include "Texture.hpp"
 #include "Shader.hpp"
@@ -86,8 +88,24 @@ private:
 
 };
 
+typedef struct _Grammar
+{
+  char ctor;
+  std::vector<float> args;
+  std::shared_ptr<struct _Grammar> lhs;
+  std::shared_ptr<struct _Grammar> rhs;
+} Grammar;
+
+std::shared_ptr<Grammar> parse(std::string str);
+std::string toString(std::shared_ptr<Grammar> g);
+std::shared_ptr<Grammar> iterate(size_t n, std::shared_ptr<Grammar> g);
+std::shared_ptr<Group> eval(std::shared_ptr<Grammar> g,
+                            int seed,
+                            std::shared_ptr<Shader> shader);
+
 /*
   V = { D(len, topScale, bottomScale, topLen, bottomLen), -- Doodad
+        C(len, topScale, bottomScale, topLen, bottomLen), -- Doodad(center only)
         S(scale), -- scepter
         T(minSegs) } -- angryTentacle
   S = { F(theta), -- fanout in 3 directions
@@ -99,17 +117,19 @@ private:
 
  */
 
+
+
 // D(len, topScale, bottomScale, topLen, bottomLen)
 //    -> A(D(len, topScale, bottomScale, topLen, bottomLen), ?)
 
 // S(scale) -> A(S(scale), ?)
-std::shared_ptr<Doodad> scepter(int seed,
-                                float scaleFactor,
-                                std::shared_ptr<Shader> shader,
-                                std::shared_ptr<Transform> & p1,
-                                std::shared_ptr<Transform> & p2,
-                                std::shared_ptr<Transform> & p3,
-                                std::shared_ptr<Transform> & p4);
+std::shared_ptr<Transform> scepter(int seed,
+                                   float scaleFactor,
+                                   std::shared_ptr<Shader> shader,
+                                   std::shared_ptr<Transform> & p1,
+                                   std::shared_ptr<Transform> & p2,
+                                   std::shared_ptr<Transform> & p3,
+                                   std::shared_ptr<Transform> & p4);
 
 // T(minSegs) -> A(T(minSegs), ?)
 std::shared_ptr<Doodad> angryTentacle(int seed,
@@ -117,17 +137,20 @@ std::shared_ptr<Doodad> angryTentacle(int seed,
                                       std::shared_ptr<Shader> shader,
                                       std::shared_ptr<Doodad> & p1);
 
-// K(theta, r1, r2, r3)
+// F(theta, r1, r2, r3)
 std::shared_ptr<Group> fanout(int seed,
                               float theta,
                               std::shared_ptr<Transform> & p1,
                               std::shared_ptr<Transform> & p2,
                               std::shared_ptr<Transform> & p3);
-
+// K(theta, r1, r2, r3)
 std::shared_ptr<Group> fork(int seed,
                             float theta,
-                            std::shared_ptr<Shader> ddShader,
-                            std::shared_ptr<Doodad> & l,
-                            std::shared_ptr<Doodad> & r);
+                            //std::shared_ptr<Shader> ddShader,
+                            std::shared_ptr<Transform> & l,
+                            std::shared_ptr<Transform> & r);
 
+std::string baseOne();
+std::string baseTwo();
+std::string baseThree();
 #endif

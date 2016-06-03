@@ -210,9 +210,10 @@ DrawFn getDrawFn (const glm::mat4 & P)
               GLuint timeID =glGetUniformLocation(shaderProg,
                                                   "time");
               glUniform1f(timeID,
-                          fmod((float) glfwGetTime() / 16.0f,
+                          fmod((float) glfwGetTime() / 2.0f,
                                2.0f * glm::pi<float>()));
-
+              std::cerr << "time = " << fmod((float) glfwGetTime() / 2.0f,
+                                             2.0f * glm::pi<float>()) << std::endl;
             };
 
           model->shader->bind(uniformFn);
