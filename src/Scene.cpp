@@ -176,21 +176,32 @@ DrawFn getDrawFn (const glm::mat4 & P)
           auto uniformFn = [=](GLuint shaderProg)
             {
               auto M = modelM;
-              auto PV = P * camera->getV(cameraM);
+              auto V = camera->getV(cameraM);
               auto lightPosDir = lightM * glm::vec4(light->dir.x,
                                                     light->dir.y,
                                                     light->dir.z,
                                                     0.0f);
+              auto cameraPos = camera->getPos(cameraM);
 
               // vertex shader uniforms
 
-              GLuint PVID = glGetUniformLocation(shaderProg, "PV");
-              glUniformMatrix4fv(PVID, 1, GL_FALSE, &PV[0][0]);
+              GLuint PID = glGetUniformLocation(shaderProg, "P");
+              glUniformMatrix4fv(PID, 1, GL_FALSE, &P[0][0]);
+
+              GLuint VID = glGetUniformLocation(shaderProg, "V");
+              glUniformMatrix4fv(VID, 1, GL_FALSE, &V[0][0]);
 
               GLuint MID = glGetUniformLocation(shaderProg, "M");
               glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
 
               // fragment shader uniforms
+
+              GLuint cameraPosID = glGetUniformLocation(shaderProg,
+                                                        "cameraPos");
+              glUniform3f(cameraPosID,
+                          cameraPos.x,
+                          cameraPos.y,
+                          cameraPos.z);
 
               GLuint lightPosDirID = glGetUniformLocation(shaderProg,
                                                           "lightDir");

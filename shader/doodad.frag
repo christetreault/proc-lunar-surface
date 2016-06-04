@@ -10,9 +10,11 @@ struct Material
 
 in vec3 normalToFrag;
 in vec3 posToFrag;
+in vec3 viewToFrag;
 in vec3 innerTexCoordToFrag;
 in vec3 outerTexCoordToFrag;
 
+uniform vec3 cameraPos;
 uniform vec4 lightDir;
 uniform vec3 lightColor;
 uniform samplerCube tex;
@@ -75,9 +77,26 @@ void main()
                            (usingNormal.x + usingNormal.y + usingNormal.z) / 3,
                            1.0) * 2.0;
 
+  float edge = max(0.0, dot(normalize(normalToFrag),
+                            normalize(cameraPos)));
 
-  color = lightTexture(mix(surfaceColor,
-                           texture(tex, texCoord),
-                           0.8),
-                       ruby);
+  vec4 baseColor = lightTexture(mix(surfaceColor,
+                                    texture(tex, texCoord),
+                                    0.8),
+                                ruby);
+  vec4 black = vec4(0.0,0.0,0.0,1.0);
+  if (edge > 0.2)
+    {
+      color = lightTexture(mix(surfaceColor,
+                                    texture(tex, texCoord),
+                                    0.8),
+                                ruby);
+    }
+  else
+    {
+      color = lightTexture(mix(surfaceColor,
+                               texture(tex, texCoord),
+                               mapRange(edge, 0.2, 0.0, 0.8, 0.4)),
+                           ruby);
+    }
 }
