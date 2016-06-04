@@ -1,6 +1,7 @@
 #ifndef DOODAD_H
 #define DOODAD_H
 
+#include <set>
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 #include <boost/tokenizer.hpp>
@@ -18,17 +19,72 @@ enum class DoodadMount
   center = 0, topRight = 1, topLeft = 2, bottomRight = 3, bottomLeft = 4
 };
 
+typedef struct _SegmentKey
+{
+  float length;
+  float topScale;
+  float bottomScale;
+  float topLength;
+  float bottomLength;
+} SegmentKey;
+
+inline bool operator==(const SegmentKey & lhs,
+                       const SegmentKey & rhs)
+{
+  return (lhs.length == rhs.length)
+    && (lhs.topScale == rhs.topScale)
+    && (lhs.bottomScale == rhs.bottomScale)
+    && (lhs.topLength == rhs.topLength)
+    && (lhs.bottomLength == rhs.bottomLength);
+}
+
+inline bool operator<(const SegmentKey & lhs,
+                      const SegmentKey & rhs)
+{
+  if (lhs.length < rhs.length)
+    {
+      //std::cerr << "lhs.length < rhs.length"<<lhs.length <<"<"<< rhs.length<<std::endl;
+      return true;
+    }
+  else if (lhs.topScale < rhs.topScale)
+    {
+      //std::cerr <<"lhs.topScale < rhs.topScale"<< lhs.topScale <<"<"<< rhs.topScale<<std::endl;
+      return true;
+    }
+  else if (lhs.bottomScale < rhs.bottomScale)
+    {
+      //std::cerr << "lhs.bottomScale == rhs.bottomScale"<<lhs.bottomScale <<"<"<< rhs.bottomScale<<std::endl;
+      return true;
+    }
+  else if (lhs.topLength < rhs.topLength)
+    {
+      //std::cerr << "lhs.topLength == rhs.topLength"<<lhs.topLength <<"<"<< rhs.topLength<<std::endl;
+      return true;
+    }
+  else if (lhs.bottomLength < rhs.bottomLength)
+    {
+      //std::cerr << "lhs.bottomLength == rhs.bottomLength"<<lhs.bottomLength <<"<"<< rhs.bottomLength<<std::endl;
+      return true;
+    }
+  else return false;
+}
+
 class Segment : public Drawable
 {
 public:
-  Segment(float length, float topScale, float bottomScale,
-          float topLength, float bottomLength,
-          std::shared_ptr<Shader> inShader);
   void draw();
-
+  static std::shared_ptr<Segment> getSegment(float length, float topScale,
+                                             float bottomScale,
+                                             float topLength,
+                                             float bottomLength,
+                                             std::shared_ptr<Shader> inShader);
   std::shared_ptr<Shader> shader;
   glm::mat4 getMountPoint(DoodadMount where);
 private:
+  Segment(float length, float topScale, float bottomScale,
+          float topLength, float bottomLength,
+          std::shared_ptr<Shader> inShader);
+  static std::map<SegmentKey, std::shared_ptr<Segment> > memo;
   CubeMap tex;
   GLuint VAO;
   GLuint VBO;

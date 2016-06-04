@@ -1,6 +1,7 @@
 #include "Doodad.hpp"
 
 static const char * texPath = "res/textures/iridescent.jpg";
+std::map<SegmentKey, std::shared_ptr<Segment> > Segment::memo;
 
 // ---------------------------------------------------------
 // Doodad --------------------------------------------------
@@ -9,8 +10,8 @@ static const char * texPath = "res/textures/iridescent.jpg";
 Doodad::Doodad(float length, float topScale, float bottomScale,
                float topLength, float bottomLength,
                std::shared_ptr<Shader> inShader)
-  : model(std::make_shared<Segment>(length, topScale, bottomScale,
-                                    topLength, bottomLength, inShader)),
+  : model(Segment::getSegment(length, topScale, bottomScale,
+                     topLength, bottomLength, inShader)),
     center(nullptr), topRight(nullptr), topLeft(nullptr),
     bottomRight(nullptr), bottomLeft(nullptr)
 {}
@@ -132,6 +133,33 @@ static glm::vec3 genNormal(std::vector<glm::vec3> & verts,
                        verts[center] - verts[up]);
 
   return glm::normalize((n1 + n2 + n3 + n4) / 4.0f);
+}
+
+std::shared_ptr<Segment> Segment::getSegment(float length, float topScale,
+                                             float bottomScale, float topLength,
+                                             float bottomLength,
+                                             std::shared_ptr<Shader> inShader)
+{
+  SegmentKey key{length, topScale, bottomScale, topLength, bottomLength};
+  //static size_t created = 0;
+
+  try
+    {
+      return memo.at(key);
+    }
+  catch (std::out_of_range e)
+    {
+      //++created;
+      //std::cerr << "creating segment #: " <<created <<std::endl;
+      std::shared_ptr<Segment> curr(new Segment(length,
+                                                topScale,
+                                                bottomScale,
+                                                topLength,
+                                                bottomLength,
+                                                inShader));
+      memo[key] = curr;
+      return curr;
+    }
 }
 
 Segment::Segment(float length, float topScale, float bottomScale,

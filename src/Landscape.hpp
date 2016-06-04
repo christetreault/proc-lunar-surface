@@ -33,9 +33,12 @@ private:
   IntRNG seedGen;
 
   std::shared_ptr<City> city;
+  std::shared_ptr<Shader> ddShader;
 
+  std::shared_ptr<Group> genDoodad1(int seed);
+  std::shared_ptr<Group> genDoodad2(int seed);
+  std::shared_ptr<Group> genDoodad3(int seed);
 
-  std::shared_ptr<Doodad> genDoodad(int seed);
   std::shared_ptr<City> genCity(int seed);
   std::shared_ptr<LandscapeModel> genLandscapeModel();
 
@@ -57,6 +60,11 @@ public:
   size_t width;
   std::vector<float> elevations;
   glm::uvec2 buildSiteCenter;
+
+  std::vector<glm::uvec2> doodads;
+  glm::uvec2 doodad1;
+  glm::uvec2 doodad2;
+  glm::uvec2 doodad3;
 
   float heightMax;
   float heightMin;
@@ -85,10 +93,15 @@ public:
                  float heightMax,
                  unsigned int seed,
                  size_t width,
-                 glm::uvec2 buildSiteCenter);
+                 glm::uvec2 buildSiteCenter,
+                 std::vector<glm::uvec2> doodad);
   void draw();
   std::shared_ptr<Shader> shader;
   glm::vec3 buildSite;
+  std::vector<glm::vec3> doodads;
+  glm::vec3 doodad1;
+  glm::vec3 doodad2;
+  glm::vec3 doodad3;
 private:
   GLTexture stoneTex;
   GLTexture gravelTex;
