@@ -62,9 +62,6 @@ public:
   glm::uvec2 buildSiteCenter;
 
   std::vector<glm::uvec2> doodads;
-  glm::uvec2 doodad1;
-  glm::uvec2 doodad2;
-  glm::uvec2 doodad3;
 
   float heightMax;
   float heightMin;
@@ -98,7 +95,7 @@ public:
   void draw();
   std::shared_ptr<Shader> shader;
   glm::vec3 buildSite;
-  std::vector<glm::vec3> doodads;
+
   glm::vec3 doodad1;
   glm::vec3 doodad2;
   glm::vec3 doodad3;

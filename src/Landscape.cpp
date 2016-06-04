@@ -137,7 +137,7 @@ std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
                cornerRNG.next(),
                cornerRNG.next());
 
-  std::vector<glm::uvec2> ddv = {hm.doodads[0], hm.doodads[3], hm.doodads[6]};
+  std::vector<glm::uvec2> ddv = {hm.doodads[0], hm.doodads[1], hm.doodads[2]};
 
   return std::make_shared<LandscapeModel>(hm.elevations,
                                           hm.heightMin,
@@ -301,21 +301,19 @@ HeightMap::HeightMap(unsigned int inSeed,
       assert(false);
     }
 
-  for (size_t count = 0; count < 3; ++count)
-    {
-      auto doodadOffset = placeZone(xMin + 1,
-                                    yMin + 1,
-                                    xMin + quadrantWidth - bsWidth - 2,
-                                    yMin + quadrantWidth - bsWidth - 2,
-                                    seedGen.next());
-      offsetX = doodadOffset.x;
-      offsetY = doodadOffset.y;
+  auto doodadOffset = placeZone(xMin + 1,
+                                yMin + 1,
+                                xMin + quadrantWidth - bsWidth - 2,
+                                yMin + quadrantWidth - bsWidth - 2,
+                                seedGen.next());
+  offsetX = doodadOffset.x;
+  offsetY = doodadOffset.y;
 
-      doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
-                                    offsetY + (bsWidth / 2)));
-    }
+  doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
+                                offsetY + (bsWidth / 2)));
 
-    switch (gen())
+
+  switch (gen())
     {
     case 1:
       xMin = 0;
@@ -338,21 +336,19 @@ HeightMap::HeightMap(unsigned int inSeed,
       assert(false);
     }
 
-    for (size_t count = 0; count < 3; ++count)
-      {
-        auto doodadOffset = placeZone(xMin + 1,
-                                      yMin + 1,
-                                      xMin + quadrantWidth - bsWidth - 2,
-                                      yMin + quadrantWidth - bsWidth - 2,
-                                      seedGen.next());
-        offsetX = doodadOffset.x;
-        offsetY = doodadOffset.y;
+  doodadOffset = placeZone(xMin + 1,
+                           yMin + 1,
+                           xMin + quadrantWidth - bsWidth - 2,
+                           yMin + quadrantWidth - bsWidth - 2,
+                           seedGen.next());
+  offsetX = doodadOffset.x;
+  offsetY = doodadOffset.y;
 
-        doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
-                                      offsetY + (bsWidth / 2)));
-      }
+  doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
+                                offsetY + (bsWidth / 2)));
 
-    switch (gen())
+
+  switch (gen())
     {
     case 1:
       xMin = 0;
@@ -375,19 +371,18 @@ HeightMap::HeightMap(unsigned int inSeed,
       assert(false);
     }
 
-    for (size_t count = 0; count < 3; ++count)
-      {
-        auto doodadOffset = placeZone(xMin + 1,
-                                      yMin + 1,
-                                      xMin + quadrantWidth - bsWidth - 2,
-                                      yMin + quadrantWidth - bsWidth - 2,
-                                      seedGen.next());
-        offsetX = doodadOffset.x;
-        offsetY = doodadOffset.y;
 
-        doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
-                                      offsetY + (bsWidth / 2)));
-      }
+  doodadOffset = placeZone(xMin + 1,
+                           yMin + 1,
+                           xMin + quadrantWidth - bsWidth - 2,
+                           yMin + quadrantWidth - bsWidth - 2,
+                           seedGen.next());
+  offsetX = doodadOffset.x;
+  offsetY = doodadOffset.y;
+
+  doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
+                                offsetY + (bsWidth / 2)));
+
 }
 
 HeightMap::HeightMap(unsigned int seed, const char * ppm)
@@ -515,58 +510,20 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
       assert(false);
     }
 
-  for (size_t count = 0; count < 3; ++count)
-    {
-      auto doodadOffset = placeZone(xMin + 1,
-                                    yMin + 1,
-                                    xMin + quadrantWidth - bsWidth - 2,
-                                    yMin + quadrantWidth - bsWidth - 2,
-                                    seedGen.next());
-      offsetX = doodadOffset.x;
-      offsetY = doodadOffset.y;
 
-      doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
-                                    offsetY + (bsWidth / 2)));
-    }
+  auto doodadOffset = placeZone(xMin + 1,
+                                yMin + 1,
+                                xMin + quadrantWidth - bsWidth - 2,
+                                yMin + quadrantWidth - bsWidth - 2,
+                                seedGen.next());
+  offsetX = doodadOffset.x;
+  offsetY = doodadOffset.y;
 
-    switch (gen())
-    {
-    case 1:
-      xMin = 0;
-      yMin = 0;
-      break;
-    case 2:
-      xMin = quadrantWidth;
-      yMin = 0;
-      break;
-    case 3:
-      xMin = 0;
-      yMin = quadrantWidth;
-      break;
-    case 4:
-      xMin = quadrantWidth;
-      yMin = quadrantWidth;
-      break;
-    default:
-      std::cerr << "gen() generated number out of range!" << std::endl;
-      assert(false);
-    }
+  doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
+                                offsetY + (bsWidth / 2)));
 
-    for (size_t count = 0; count < 3; ++count)
-      {
-        auto doodadOffset = placeZone(xMin + 1,
-                                      yMin + 1,
-                                      xMin + quadrantWidth - bsWidth - 2,
-                                      yMin + quadrantWidth - bsWidth - 2,
-                                      seedGen.next());
-        offsetX = doodadOffset.x;
-        offsetY = doodadOffset.y;
 
-        doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
-                                      offsetY + (bsWidth / 2)));
-      }
-
-    switch (gen())
+  switch (gen())
     {
     case 1:
       xMin = 0;
@@ -589,19 +546,54 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
       assert(false);
     }
 
-    for (size_t count = 0; count < 3; ++count)
-      {
-        auto doodadOffset = placeZone(xMin + 1,
-                                      yMin + 1,
-                                      xMin + quadrantWidth - bsWidth - 2,
-                                      yMin + quadrantWidth - bsWidth - 2,
-                                      seedGen.next());
-        offsetX = doodadOffset.x;
-        offsetY = doodadOffset.y;
 
-        doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
-                                      offsetY + (bsWidth / 2)));
-      }
+  doodadOffset = placeZone(xMin + 1,
+                           yMin + 1,
+                           xMin + quadrantWidth - bsWidth - 2,
+                           yMin + quadrantWidth - bsWidth - 2,
+                           seedGen.next());
+  offsetX = doodadOffset.x;
+  offsetY = doodadOffset.y;
+
+  doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
+                                offsetY + (bsWidth / 2)));
+
+
+  switch (gen())
+    {
+    case 1:
+      xMin = 0;
+      yMin = 0;
+      break;
+    case 2:
+      xMin = quadrantWidth;
+      yMin = 0;
+      break;
+    case 3:
+      xMin = 0;
+      yMin = quadrantWidth;
+      break;
+    case 4:
+      xMin = quadrantWidth;
+      yMin = quadrantWidth;
+      break;
+    default:
+      std::cerr << "gen() generated number out of range!" << std::endl;
+      assert(false);
+    }
+
+
+  doodadOffset = placeZone(xMin + 1,
+                           yMin + 1,
+                           xMin + quadrantWidth - bsWidth - 2,
+                           yMin + quadrantWidth - bsWidth - 2,
+                           seedGen.next());
+  offsetX = doodadOffset.x;
+  offsetY = doodadOffset.y;
+
+  doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
+                                offsetY + (bsWidth / 2)));
+
 }
 
 void HeightMap::safeSquareStep(glm::ivec2 target,
@@ -1040,9 +1032,9 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
                                count) != deps.end()) ? 1.0f : 0.0f;
 
       vertices.push_back({verts[count],
-                          normals[count],
-                          texCoords[count],
-                          isDep});
+            normals[count],
+            texCoords[count],
+            isDep});
     }
 
   glGenVertexArrays(1, &VAO);
