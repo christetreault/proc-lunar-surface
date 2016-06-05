@@ -6,6 +6,7 @@
 #include <GL/glew.h>
 #include <boost/tokenizer.hpp>
 #include <sstream>
+#include <iomanip>
 #include "SceneGraph.hpp"
 #include "Texture.hpp"
 #include "Shader.hpp"
@@ -21,11 +22,11 @@ enum class DoodadMount
 
 typedef struct _SegmentKey
 {
-  float length;
-  float topScale;
-  float bottomScale;
-  float topLength;
-  float bottomLength;
+  int length;
+  int topScale;
+  int bottomScale;
+  int topLength;
+  int bottomLength;
 } SegmentKey;
 
 inline bool operator==(const SegmentKey & lhs,
@@ -41,6 +42,8 @@ inline bool operator==(const SegmentKey & lhs,
 inline bool operator<(const SegmentKey & lhs,
                       const SegmentKey & rhs)
 {
+  if (lhs == rhs) return false;
+
   if (lhs.length < rhs.length)
     {
       //std::cerr << "lhs.length < rhs.length"<<lhs.length <<"<"<< rhs.length<<std::endl;
@@ -80,11 +83,17 @@ public:
                                              std::shared_ptr<Shader> inShader);
   std::shared_ptr<Shader> shader;
   glm::mat4 getMountPoint(DoodadMount where);
+  static void clearMemo()
+  {
+    std::cerr << "memo size: " << memo.size() << std::endl;
+    memo = std::map<std::string, std::shared_ptr<Segment> >();
+    std::cerr << "memo size: " << memo.size() << std::endl;
+  }
 private:
   Segment(float length, float topScale, float bottomScale,
           float topLength, float bottomLength,
           std::shared_ptr<Shader> inShader);
-  static std::map<SegmentKey, std::shared_ptr<Segment> > memo;
+  static std::map<std::string, std::shared_ptr<Segment> > memo;
   CubeMap tex;
   GLuint VAO;
   GLuint VBO;

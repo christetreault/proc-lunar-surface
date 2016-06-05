@@ -59,3 +59,24 @@ unsigned int getRandomSeed()
   unsigned int seed = std::time(nullptr);
   return IntRNG(seed).next();
 }
+
+IntSeq::IntSeq(unsigned int inSeed, int min, int max)
+  : seed(inSeed), engine(seed), dist(min, max), taken(), min(min), max(max)
+{
+}
+
+unsigned int IntSeq::next()
+{
+  // diverges if called too many times. We're too far in the game to
+  // concern ourselves with such matters...
+
+  while (true)
+    {
+      auto curr = dist(engine);
+      if (std::find(taken.begin(), taken.end(), curr) == taken.end())
+        {
+          taken.push_back(curr);
+          return curr;
+        }
+    }
+}

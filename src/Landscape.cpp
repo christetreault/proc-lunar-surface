@@ -14,20 +14,88 @@ static const char * terrainPath = "res/terrain/moon.tga";
 // LandscapeBuilder ----------------------------------------
 // ---------------------------------------------------------
 
-LandscapeBuilder::LandscapeBuilder(int seed, const char * ppm)
-  : seedGen(seed), ddShader(std::make_shared<Shader>(ddVertPath, ddFragPath))
+void LandscapeBuilder::permuteDoodads()
 {
+  IntSeq seq(seedGen.next(), 1, 3);
+
+  doodad1 = nullptr;
+  doodad2 = nullptr;
+  doodad3 = nullptr;
+
+  Segment::clearMemo();
+
+
+  auto first = seq.next();
+  auto second = seq.next();
+  auto third = seq.next();
+
+   if (first == 1) doodad1 = genDoodad1(seedGen.next());
+   else if (first == 2) doodad1 = genDoodad2(seedGen.next());
+   else doodad1 = genDoodad3(seedGen.next());
+
+   if (second == 1) doodad2 = genDoodad1(seedGen.next());
+   else if (second == 2) doodad2 = genDoodad2(seedGen.next());
+   else doodad2 = genDoodad3(seedGen.next());
+
+   if (third == 1) doodad3 = genDoodad1(seedGen.next());
+   else if (third == 2) doodad3 = genDoodad2(seedGen.next());
+   else doodad3 = genDoodad3(seedGen.next());
+
+  finalize();
+}
+
+void LandscapeBuilder::permuteCity()
+{
+  std::cerr << "permute city" << std::endl;
+}
+
+void LandscapeBuilder::permuteLandscape()
+{
+  randomLS = genLandscapeModel();
+
+  currLS = randomLS;
+
+  finalize();
+}
+
+void LandscapeBuilder::swapLandscape()
+{
+  if (currLS == randomLS) currLS = realDataLS;
+  else currLS = randomLS;
+
+  finalize();
 }
 
 LandscapeBuilder::LandscapeBuilder(int seed)
-  : seedGen(seed), ddShader(std::make_shared<Shader>(ddVertPath, ddFragPath))
-{}
+  : seedGen(seed), ddShader(std::make_shared<Shader>(ddVertPath, ddFragPath)),
+    lsShader(std::make_shared<Shader>(vertPath, fragPath))
+{
+  doodad1 = genDoodad1(seedGen.next());
+  doodad2 = genDoodad2(seedGen.next());
+  doodad3 = genDoodad3(seedGen.next());
 
-std::shared_ptr<Group> LandscapeBuilder::genDoodad1(int seed)
+  randomLS = genLandscapeModel();
+
+  HeightMap hm(seedGen.next(), terrainPath);
+  std::vector<glm::uvec2> ddv = {hm.doodads[0], hm.doodads[1], hm.doodads[2]};
+
+  realDataLS = std::make_shared<LandscapeModel>(hm.elevations,
+                                                hm.heightMin,
+                                                hm.heightMax,
+                                                seedGen.next(),
+                                                hm.width,
+                                                hm.buildSiteCenter,
+                                                ddv,
+                                                lsShader);
+  currLS = randomLS;
+}
+
+std::shared_ptr<Transform> LandscapeBuilder::genDoodad1(int seed)
 {
   auto g = baseOne();
-  std::cerr << "g = " << toString(iterate(2,parse(g))) << std::endl;
-  auto dd = eval(iterate(2,parse(g)), seed, ddShader);
+  auto g2 = iterate(2,parse(g));
+  std::cerr << "g = " << toString(g2) << std::endl;
+  auto dd = eval(g2, seed, ddShader);
 
   auto ddscale = std::make_shared<Transform>(dd,
                                              glm::scale(glm::mat4(),
@@ -37,11 +105,12 @@ std::shared_ptr<Group> LandscapeBuilder::genDoodad1(int seed)
   return ddscale;
 }
 
-std::shared_ptr<Group> LandscapeBuilder::genDoodad2(int seed)
+std::shared_ptr<Transform> LandscapeBuilder::genDoodad2(int seed)
 {
   auto g = baseTwo();
-  std::cerr << "g = " << toString(iterate(2,parse(g))) << std::endl;
-  auto dd = eval(iterate(2,parse(g)), seed, ddShader);
+  auto g2 = iterate(2,parse(g));
+  std::cerr << "g = " << toString(g2) << std::endl;
+  auto dd = eval(g2, seed, ddShader);
 
   auto ddscale = std::make_shared<Transform>(dd,
                                              glm::scale(glm::mat4(),
@@ -51,11 +120,12 @@ std::shared_ptr<Group> LandscapeBuilder::genDoodad2(int seed)
   return ddscale;
 }
 
-std::shared_ptr<Group> LandscapeBuilder::genDoodad3(int seed)
+std::shared_ptr<Transform> LandscapeBuilder::genDoodad3(int seed)
 {
   auto g = baseThree();
-  std::cerr << "g = " << toString(iterate(2,parse(g))) << std::endl;
-  auto dd = eval(iterate(2,parse(g)), seed, ddShader);
+  auto g2 = iterate(2,parse(g));
+  std::cerr << "g = " << toString(g2) << std::endl;
+  auto dd = eval(g2, seed, ddShader);
 
   auto ddscale = std::make_shared<Transform>(dd,
                                              glm::scale(glm::mat4(),
@@ -65,11 +135,11 @@ std::shared_ptr<Group> LandscapeBuilder::genDoodad3(int seed)
   return ddscale;
 }
 
-std::shared_ptr<Group> LandscapeBuilder::finalize()
+void LandscapeBuilder::finalize()
 {
   auto root = std::make_shared<Group>();
 
-  auto hmModel = genLandscapeModel();
+  auto hmModel = currLS;
 
   auto scaledRoot = std::make_shared<Group>();
 
@@ -81,16 +151,16 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   scaledRoot->insert(hmModel);
   root->insert(baseScale);
 
-  auto dd1 = genDoodad1(seedGen.next());
+  auto dd1 = doodad1;
   auto dd1Base = std::make_shared<Transform>(dd1,
                                              glm::translate(glm::mat4(),
                                                             hmModel->doodad1));
-  auto dd2 = genDoodad2(seedGen.next());
+  auto dd2 = doodad2;
   auto dd2Base = std::make_shared<Transform>(dd2,
                                              glm::translate(glm::mat4(),
                                                             hmModel->doodad2));
 
-  auto dd3 = genDoodad3(seedGen.next());
+  auto dd3 = doodad3;
   auto dd3Base = std::make_shared<Transform>(dd3,
                                              glm::translate(glm::mat4(),
                                                             hmModel->doodad3));
@@ -99,34 +169,11 @@ std::shared_ptr<Group> LandscapeBuilder::finalize()
   scaledRoot->insert(dd2Base);
   scaledRoot->insert(dd3Base);
 
-  // TODO: For testing. Much of this shoul prob move genCity
-
-  //auto ddShader = std::make_shared<Shader>(ddVertPath, ddFragPath);
-
-
-  //auto g = baseThree();
-  //std::cerr << "g = " << toString(iterate(2,parse(g))) << std::endl;
-  //auto test = eval(iterate(2,parse(g)), seedGen.next(), ddShader);
-
-  //auto cityScale = std::make_shared<Transform>(test,
-  //                                             glm::scale(glm::mat4(),
-  //                                                        glm::vec3(0.3f/16.0f,
-  //                                                                  0.3f/16.0f,
-  //                                                                  0.3f/16.0f)));
-  //auto cityBase = std::make_shared<Transform>(cityScale,
-  //                                            glm::translate(glm::mat4(),
-  //                                                           hmModel->buildSite));
-  //scaledRoot->insert(cityBase);
-
-  //root->insert(test);
-
-  return root;
+  landscape = root;
 }
 
 std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
 {
-  //HeightMap hm(seedGen.next(), terrainPath);;
-
   size_t n = 6;
 
   RNG cornerRNG(seedGen.next(), -0.5, 0.5);
@@ -145,7 +192,8 @@ std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
                                           seedGen.next(),
                                           hm.width,
                                           hm.buildSiteCenter,
-                                          ddv);
+                                          ddv,
+                                          lsShader);
 }
 
 // ---------------------------------------------------------
@@ -167,6 +215,7 @@ static std::function<size_t()> sequenceGen(int seed,
           if (std::find(placed.begin(), placed.end(), curr) == placed.end())
             {
               placed.push_back(curr);
+              if ((int) placed.size() >= (max - min)) placed.clear();
               return curr;
             }
         }
@@ -216,7 +265,7 @@ HeightMap::HeightMap(unsigned int inSeed,
 
   diamondSquare(n, 0.5f, seedGen.next(), tl, tr, bl, br);
 
-  auto gen = sequenceGen(seedGen.next(), 1, 4);
+  IntSeq gen(seedGen.next(), 1, 4);
 
   auto bsWidth = width / 4;
   auto quadrantWidth = width / 2;
@@ -224,7 +273,7 @@ HeightMap::HeightMap(unsigned int inSeed,
   size_t xMin;
   size_t yMin;
 
-  switch (gen())
+  switch (gen.next())
     {
     case 1:
       xMin = 0;
@@ -278,7 +327,7 @@ HeightMap::HeightMap(unsigned int inSeed,
 
   // Center doodads
 
-  switch (gen())
+  switch (gen.next())
     {
     case 1:
       xMin = 0;
@@ -313,7 +362,7 @@ HeightMap::HeightMap(unsigned int inSeed,
                                 offsetY + (bsWidth / 2)));
 
 
-  switch (gen())
+  switch (gen.next())
     {
     case 1:
       xMin = 0;
@@ -348,7 +397,7 @@ HeightMap::HeightMap(unsigned int inSeed,
                                 offsetY + (bsWidth / 2)));
 
 
-  switch (gen())
+  switch (gen.next())
     {
     case 1:
       xMin = 0;
@@ -418,7 +467,7 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
 
   width = iwidth;
 
-  auto gen = sequenceGen(seedGen.next(), 1, 4);
+  IntSeq gen(seedGen.next(), 1, 4);
 
   auto bsWidth = width / 4;
   auto quadrantWidth = width / 2;
@@ -426,7 +475,7 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
   size_t xMin;
   size_t yMin;
 
-  switch (gen())
+  switch (gen.next())
     {
     case 1:
       xMin = 0;
@@ -487,7 +536,7 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
 
   // Center doodads
 
-  switch (gen())
+  switch (gen.next())
     {
     case 1:
       xMin = 0;
@@ -523,7 +572,7 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
                                 offsetY + (bsWidth / 2)));
 
 
-  switch (gen())
+  switch (gen.next())
     {
     case 1:
       xMin = 0;
@@ -559,7 +608,7 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
                                 offsetY + (bsWidth / 2)));
 
 
-  switch (gen())
+  switch (gen.next())
     {
     case 1:
       xMin = 0;
@@ -832,7 +881,8 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
                                unsigned int seed,
                                size_t width,
                                glm::uvec2 buildSiteCenter,
-                               std::vector<glm::uvec2> doodad)
+                               std::vector<glm::uvec2> doodad,
+                               std::shared_ptr<Shader> lsShader)
   : stoneTex(stonePath), gravelTex(gravelPath),
     depositTex(depositPath), VAO(0), VBO(0), EBO(0)
 {
@@ -1088,7 +1138,7 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
 
   // Shaders
 
-  shader = std::make_shared<Shader>(vertPath, fragPath);
+  shader = lsShader;
 }
 
 void LandscapeModel::draw()

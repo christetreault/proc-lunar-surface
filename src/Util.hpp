@@ -5,6 +5,7 @@
 #include <random>
 #include <limits>
 #include <ctime>
+#include <algorithm>
 
 // maps a value s in the range of sMin-sMax into the range of tMin-tMax
 float mapRange(float s, float sMin, float sMax,
@@ -65,6 +66,21 @@ private:
   unsigned int seed;
   std::mt19937_64 engine;
   std::uniform_int_distribution<unsigned int> dist;
+};
+
+class IntSeq
+{
+public:
+  IntSeq(unsigned int seed, int min, int max);
+  unsigned int next();
+  unsigned int getSeed() { return seed; }
+private:
+  unsigned int seed;
+  std::mt19937_64 engine;
+  std::uniform_int_distribution<unsigned int> dist;
+  std::vector<unsigned int> taken;
+  int min;
+  int max;
 };
 
 unsigned int getRandomSeed();

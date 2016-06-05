@@ -16,6 +16,37 @@ const char * fragPath = "shader/shader.frag";
 const char * sbFragPath = "shader/sbshader.frag";
 const char * solidColorFragPath = "shader/solidColor.frag";
 
+std::shared_ptr<LandscapeBuilder> builder = nullptr;
+std::shared_ptr<Group> lsRoot = nullptr;
+
+void permuteDoodads()
+{
+  lsRoot->clear();
+  builder->permuteDoodads();
+  lsRoot->insert(builder->landscape);
+}
+
+void permuteCity()
+{
+  lsRoot->clear();
+  builder->permuteCity();
+  lsRoot->insert(builder->landscape);
+}
+
+void permuteLandscape()
+{
+  lsRoot->clear();
+  builder->permuteLandscape();
+  lsRoot->insert(builder->landscape);
+}
+
+void swapLandscape()
+{
+  lsRoot->clear();
+  builder->swapLandscape();
+  lsRoot->insert(builder->landscape);
+}
+
 static std::shared_ptr<Transform> makeSky()
 {
   auto skyBoxShader = std::make_shared<Shader>(sbVertPath, sbFragPath);
@@ -41,9 +72,13 @@ static std::shared_ptr<Group> makeGround()
 
   std::cerr << "Seed used: " << seed << std::endl;
 
-  LandscapeBuilder builder(seed);
+  builder = std::make_shared<LandscapeBuilder>(seed);
+  builder->finalize();
 
-  return builder.finalize();
+  lsRoot = std::make_shared<Group>();
+  lsRoot->insert(builder->landscape);
+  std::cerr << "finalized" << std::endl;
+  return lsRoot;
 }
 
 auto lightRotateFn = [](glm::mat4 & rotate, double time)

@@ -91,7 +91,7 @@ public:
 
   virtual void insert(std::shared_ptr<Node> what) {children.push_back(what);}
   //virtual void remove(std::shared_ptr<Node> what);
-  // virtual void clear() {children.clear();}
+  virtual void clear() {children.clear();}
 
   bool isGroup() const {return true;}
 

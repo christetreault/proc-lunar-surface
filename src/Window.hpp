@@ -9,6 +9,7 @@
 #include "SceneGraph.hpp"
 #include "Scene.hpp"
 #include "Util.hpp"
+#include "Landscape.hpp"
 
 class Window
 {

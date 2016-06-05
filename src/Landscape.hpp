@@ -22,28 +22,36 @@ class LandscapeBuilder
 {
 public:
   LandscapeBuilder(int seed);
-  LandscapeBuilder(int seed, const char * ppm);
 
   void permuteDoodads();
   void permuteCity();
   void permuteLandscape();
+  void swapLandscape();
 
-  std::shared_ptr<Group> finalize();
+  void finalize();
+  std::shared_ptr<Group> landscape;
 private:
   IntRNG seedGen;
 
   std::shared_ptr<City> city;
-  std::shared_ptr<Shader> ddShader;
+  std::shared_ptr<LandscapeModel> randomLS;
+  std::shared_ptr<LandscapeModel> realDataLS;
 
-  std::shared_ptr<Group> genDoodad1(int seed);
-  std::shared_ptr<Group> genDoodad2(int seed);
-  std::shared_ptr<Group> genDoodad3(int seed);
+  std::shared_ptr<LandscapeModel> currLS;
+
+  std::shared_ptr<Transform> doodad1;
+  std::shared_ptr<Transform> doodad2;
+  std::shared_ptr<Transform> doodad3;
+
+  std::shared_ptr<Shader> ddShader;
+  std::shared_ptr<Shader> lsShader;
+
+  std::shared_ptr<Transform> genDoodad1(int seed);
+  std::shared_ptr<Transform> genDoodad2(int seed);
+  std::shared_ptr<Transform> genDoodad3(int seed);
 
   std::shared_ptr<City> genCity(int seed);
   std::shared_ptr<LandscapeModel> genLandscapeModel();
-
-  std::vector<HeightMap> genHeightmaps(int seed);
-  std::vector<HeightMap> genHeightmaps(int seed, const char * ppm);
 };
 
 class HeightMap
@@ -91,7 +99,8 @@ public:
                  unsigned int seed,
                  size_t width,
                  glm::uvec2 buildSiteCenter,
-                 std::vector<glm::uvec2> doodad);
+                 std::vector<glm::uvec2> doodad,
+                 std::shared_ptr<Shader> shader);
   void draw();
   std::shared_ptr<Shader> shader;
   glm::vec3 buildSite;

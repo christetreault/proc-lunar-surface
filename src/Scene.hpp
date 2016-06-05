@@ -13,6 +13,11 @@
 // but reduces clutter in Window.cpp
 std::shared_ptr<Group> getScene(std::shared_ptr<Transform>);
 
+void swapLandscape();
+void permuteDoodads();
+void permuteCity();
+void permuteLandscape();
+
 // returns a DrawFn used by SceneGraph::draw (see SceneGraph.hpp for
 // what the signature of DrawFn is)
 DrawFn getDrawFn (const glm::mat4 & P);

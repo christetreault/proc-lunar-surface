@@ -30,8 +30,6 @@ int Window::height;
 
 glm::mat4 P;
 
-std::shared_ptr<OBJObject> test;
-
 auto idleCamFn = [](glm::mat4 & rotate, double time)
 {
   static float tPrev = (float) time;
@@ -178,6 +176,18 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
     {
       switch (key)
         {
+        case GLFW_KEY_S:
+          swapLandscape();
+          break;
+        case GLFW_KEY_D:
+          permuteDoodads();
+          break;
+        case GLFW_KEY_L:
+          permuteLandscape();
+          break;
+        case GLFW_KEY_Y:
+          permuteCity();
+          break;
         case GLFW_KEY_R:
           resetCamera = true;
           break;

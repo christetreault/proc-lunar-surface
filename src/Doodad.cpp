@@ -1,7 +1,7 @@
 #include "Doodad.hpp"
 
 static const char * texPath = "res/textures/iridescent.jpg";
-std::map<SegmentKey, std::shared_ptr<Segment> > Segment::memo;
+std::map<std::string, std::shared_ptr<Segment> > Segment::memo;
 
 // ---------------------------------------------------------
 // Doodad --------------------------------------------------
@@ -140,8 +140,18 @@ std::shared_ptr<Segment> Segment::getSegment(float length, float topScale,
                                              float bottomLength,
                                              std::shared_ptr<Shader> inShader)
 {
-  SegmentKey key{length, topScale, bottomScale, topLength, bottomLength};
+
+  // SegmentKey key{(int)length,
+  //     (int)topScale,
+  //     (int)bottomScale,
+  //     (int)topLength,
+  //     (int)bottomLength};
   //static size_t created = 0;
+
+  std::ostringstream os;
+  os << std::setprecision(2) << length << topScale << bottomScale
+     << topLength << bottomLength;
+  auto key = os.str();
 
   try
     {
@@ -157,7 +167,19 @@ std::shared_ptr<Segment> Segment::getSegment(float length, float topScale,
                                                 topLength,
                                                 bottomLength,
                                                 inShader));
+      if (memo.size() > 50)
+        {
+          std::cerr << "size: " << memo.size() << std::endl;
+          std::cerr << "trying to get: {" << length << ", "
+                    << topScale << ", "
+                    << bottomScale << ", "
+                    << topLength << ", "
+                    << bottomLength << "}"
+                    << std::endl;
+        }
+      assert(memo.size() < 200);
       memo[key] = curr;
+
       return curr;
     }
 }
