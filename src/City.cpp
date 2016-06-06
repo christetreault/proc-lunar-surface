@@ -25,7 +25,7 @@ vector<float> read_floats(int len, string filename) {
 
 City::City(unsigned int seed) {
   Py_Initialize();
-  PySys_SetArgvEx(main_argc, (wchar_t**) main_argv, 1);
+  PySys_SetArgvEx(main_argc, main_argv, 1);
   FILE* f = fopen("citygen/export.py", "r");
 //    PyRun_SimpleFile(f, "citygen/export.py");
 //  PyRun_SimpleString("import os, sys\nprint os.getcwd()\nprint sys.path\nimport citygen.export\n");
@@ -68,9 +68,10 @@ RoadNetwork::RoadNetwork(std::vector<float> roads, std::shared_ptr<LandscapeMode
   glGenBuffers(1, &VBO);
   glBindVertexArray(VAO);
 
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float) * 3, &vertices[0], GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LandscapeVertex), (GLvoid*) 0);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBindVertexArray(0);
 }

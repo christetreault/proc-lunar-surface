@@ -16,8 +16,8 @@ include(findSOIL.cmake)
 pkg_search_module(SOIL REQUIRED SOIL)
 include_directories(${GLFW_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
 
-find_package(PythonInterp REQUIRED)
-find_package(PythonLibs REQUIRED)
+find_package(PythonInterp 2.7 REQUIRED)
+find_package(PythonLibs 2.7 REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 target_link_libraries(final ${GLFW_LIBRARIES} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES} ${SOIL_LIBRARIES} python2.7)
