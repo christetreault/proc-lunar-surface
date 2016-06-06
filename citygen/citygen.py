@@ -317,7 +317,7 @@ class Highway(object):
         pass
 
 
-def make_terrain():
+def make_city():
     # Generate a heightmap using spectral synthesis
     def noise(res=size, lin=100000, exp=1.2):
         realnoise = 2 * rand(res, res) - 1
@@ -452,20 +452,3 @@ def make_terrain():
 
     return height, population.tolist(), list(res), list(set(RoadSegment.segs.values()))
 
-height, population, centers, segs = make_terrain()
-intersections = [(node.loc.x, node.loc.y) for node in RoadNode.nodes.values() if node.is_intersection]
-
-imshow(population, origin='lower', cmap='gray', interpolation='none')
-CS = contour(range(size), range(size), height, levels=linspace(0, 1, 15), colors='w')
-cm = get_cmap('gist_rainbow')
-cNorm = Normalize(vmin=0, vmax=len(centers) - 1)
-scalarMap = ScalarMappable(norm=cNorm, cmap=cm)
-axis('off')
-
-# for seg in segs:
-    # seg.render()
-
-# ix, iy = zip(*intersections)
-# scatter(ix, iy, c='w', s=25, zorder=2)
-# scatter(res[:, 0], res[:, 1], c=map(scalarMap.to_rgba, range(len(res))), s=25, zorder=3)
-show()

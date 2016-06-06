@@ -286,5 +286,23 @@ DrawFn getDrawFn (const glm::mat4 & P)
           model->shader->unbind();
           model->model->unbind();
         }
+      else if (typeid(*modelbase) == typeid(RoadNetwork)) {
+        auto model = std::dynamic_pointer_cast<RoadNetwork>(modelbase);
+        auto uniformFn = [=](GLuint shaderProg) {
+          auto M = modelM;
+          auto PV = P * camera->getV(cameraM);
+
+          // vertex shader uniforms
+
+          GLuint PVID = glGetUniformLocation(shaderProg, "PV");
+          glUniformMatrix4fv(PVID, 1, GL_FALSE, &PV[0][0]);
+
+          GLuint MID = glGetUniformLocation(shaderProg, "M");
+          glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
+        };
+        RoadNetwork::shader->bind(uniformFn);
+        model->draw();
+        RoadNetwork::shader->unbind();
+      }
     };
 }

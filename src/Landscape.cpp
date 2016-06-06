@@ -1,5 +1,7 @@
 #include "Landscape.hpp"
 
+#include <Python.h>
+
 static const char * vertPath = "shader/heightMap.vert";
 static const char * fragPath = "shader/heightMap.frag";
 
@@ -46,7 +48,9 @@ void LandscapeBuilder::permuteDoodads()
 
 void LandscapeBuilder::permuteCity()
 {
-  std::cerr << "permute city" << std::endl;
+  city = genCity();
+
+  finalize();
 }
 
 void LandscapeBuilder::permuteLandscape()
@@ -87,6 +91,8 @@ LandscapeBuilder::LandscapeBuilder(int seed)
                                                 hm.buildSiteCenter,
                                                 ddv,
                                                 lsShader);
+
+  city = genCity();
   currLS = randomLS;
 }
 
@@ -140,7 +146,6 @@ void LandscapeBuilder::finalize()
   auto root = std::make_shared<Group>();
 
   auto hmModel = currLS;
-
   auto scaledRoot = std::make_shared<Group>();
 
   auto baseScale = std::make_shared<Transform>(scaledRoot,
@@ -149,6 +154,10 @@ void LandscapeBuilder::finalize()
                                                                     16.0f,
                                                                     16.0f)));
   scaledRoot->insert(hmModel);
+
+  auto cityGroundBase = std::make_shared<Transform>(city->ground,
+  glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
+  scaledRoot->insert(cityGroundBase);
   root->insert(baseScale);
 
   auto dd1 = doodad1;
@@ -195,6 +204,14 @@ std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
                                           ddv,
                                           lsShader);
 }
+
+std::shared_ptr<City> LandscapeBuilder::genCity() {
+  int seed = seedGen.next();
+
+  return std::make_shared<City>(seed);
+}
+
+
 
 // ---------------------------------------------------------
 // HeightMap -----------------------------------------------
@@ -432,6 +449,18 @@ HeightMap::HeightMap(unsigned int inSeed,
   doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
                                 offsetY + (bsWidth / 2)));
 
+}
+
+HeightMap::HeightMap(const char* raw, int width){
+    float buf[width*width];
+    FILE* f = fopen(raw, "r");
+    if(!f){
+        std::cerr << "Failed to open heightmap " << raw << std::endl;
+        assert(false);
+    }
+    fread(buf, width*width, 4, f);
+    fclose(f);
+    elevations = std::vector<float>(buf, buf+width*width);
 }
 
 HeightMap::HeightMap(unsigned int seed, const char * ppm)
@@ -884,7 +913,8 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
                                std::vector<glm::uvec2> doodad,
                                std::shared_ptr<Shader> lsShader)
   : stoneTex(stonePath), gravelTex(gravelPath),
-    depositTex(depositPath), VAO(0), VBO(0), EBO(0)
+    depositTex(depositPath), VAO(0), VBO(0), EBO(0),
+    width(width)
 {
   std::vector<glm::vec3> verts;
   std::vector<GLuint> idxs;
@@ -948,15 +978,15 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
             {
               buildSite = glm::vec3(xf, yf, zf);
             }
-          if (x == doodad[0].x && z == doodad[0].y)
+          if (doodad.size() >= 1 && x == doodad[0].x && z == doodad[0].y)
             {
               doodad1 = glm::vec3(xf, yf, zf);
             }
-          if (x == doodad[1].x && z == doodad[1].y)
+          if (doodad.size() >= 2 && x == doodad[1].x && z == doodad[1].y)
             {
               doodad2 = glm::vec3(xf, yf, zf);
             }
-          if (x == doodad[2].x && z == doodad[2].y)
+          if (doodad.size() >= 3 && x == doodad[2].x && z == doodad[2].y)
             {
               doodad3 = glm::vec3(xf, yf, zf);
             }
@@ -978,9 +1008,18 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
   if (diffY > largestDiff) largestDiff = diffY;
   if (diffZ > largestDiff) largestDiff = diffZ;
 
+  // If we're normalizing a landscape without any doodads,
+  // we're working with the citygen heightmap, so don't adjust
+  // the elevation
+  if (doodad.size() == 0) avg.y = 0.001;
+
+
   for (auto & curr : verts)
     {
       curr = (curr - avg) / largestDiff;
+      // TODO: adjust these coordinates so the citygen terrain matches
+      // the surrounding landscape
+      elevations.push_back(curr.y);
       texCoords.push_back(glm::vec2(curr.x, curr.z));
     }
 

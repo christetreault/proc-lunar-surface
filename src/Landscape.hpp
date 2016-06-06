@@ -17,6 +17,7 @@ class Natural;
 class Buildable;
 class LandscapeBuilder;
 class LandscapeModel;
+class City;
 
 class LandscapeBuilder
 {
@@ -50,7 +51,7 @@ private:
   std::shared_ptr<Transform> genDoodad2(int seed);
   std::shared_ptr<Transform> genDoodad3(int seed);
 
-  std::shared_ptr<City> genCity(int seed);
+  std::shared_ptr<City> genCity();
   std::shared_ptr<LandscapeModel> genLandscapeModel();
 };
 
@@ -64,6 +65,7 @@ public:
             float bottomLeft,
             float bottomRight);
   HeightMap(unsigned int seed, const char * ppm);
+  HeightMap(const char* raw, int);
 
   size_t width;
   std::vector<float> elevations;
@@ -104,6 +106,9 @@ public:
   void draw();
   std::shared_ptr<Shader> shader;
   glm::vec3 buildSite;
+
+  size_t width;
+  std::vector<float> elevations;
 
   glm::vec3 doodad1;
   glm::vec3 doodad2;

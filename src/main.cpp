@@ -5,6 +5,8 @@
 #include "Window.hpp"
 
 GLFWwindow* window;
+int main_argc;
+char** main_argv;
 
 void error_callback(int error, const char* description)
 {
@@ -73,8 +75,10 @@ void print_versions()
 #endif
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
+  main_argc = argc;
+  main_argv = argv;
   // Create the GLFW window
   window = Window::create_window(768, 768);
   // Print OpenGL and GLSL versions
