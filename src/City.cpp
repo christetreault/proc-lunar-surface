@@ -28,7 +28,7 @@ City::City(unsigned int seed) {
   PySys_SetArgvEx(main_argc, main_argv, 1);
   FILE* f = fopen("citygen/export.py", "r");
 //    PyRun_SimpleFile(f, "citygen/export.py");
-//  PyRun_SimpleString("import os, sys\nprint os.getcwd()\nprint sys.path\nimport citygen.export\n");
+  PyRun_SimpleString("import os, sys\nprint os.getcwd()\nprint sys.path\nimport citygen.export\n");
   fclose(f);
   Py_Finalize();
   int width = 512;
