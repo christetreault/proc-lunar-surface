@@ -102,7 +102,8 @@ public:
                  size_t width,
                  glm::uvec2 buildSiteCenter,
                  std::vector<glm::uvec2> doodad,
-                 std::shared_ptr<Shader> shader);
+                 std::shared_ptr<Shader> shader,
+                 bool flatten = false);
   void draw();
   std::shared_ptr<Shader> shader;
   glm::vec3 buildSite;

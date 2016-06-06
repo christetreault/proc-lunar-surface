@@ -90,7 +90,8 @@ LandscapeBuilder::LandscapeBuilder(int seed)
                                                 hm.width,
                                                 hm.buildSiteCenter,
                                                 ddv,
-                                                lsShader);
+                                                lsShader,
+                                                true);
 
   city = genCity();
   currLS = randomLS;
@@ -911,7 +912,8 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
                                size_t width,
                                glm::uvec2 buildSiteCenter,
                                std::vector<glm::uvec2> doodad,
-                               std::shared_ptr<Shader> lsShader)
+                               std::shared_ptr<Shader> lsShader,
+                               bool flatten)
   : stoneTex(stonePath), gravelTex(gravelPath),
     depositTex(depositPath), VAO(0), VBO(0), EBO(0),
     width(width)
@@ -939,6 +941,10 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
 
   auto spacing = 1.0f / (((float) width - 1));
 
+  float heightUpperLim = (flatten)
+    ? 7.0f
+    : (RNG(seed, 15.0f, 50.0f).next());
+
   for (size_t z = 0; z < width; ++z)
     {
       for (size_t x = 0; x < width; ++x)
@@ -947,7 +953,7 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
           if (xf > maxX) maxX = xf;
           if (xf < minX) minX = xf;
           float yf = mapRange(index<float>(heights, width, x, z) * spacing,
-                              heightMin, heightMax, 0.0f, 25.0f);
+                              heightMin, heightMax, 0.0f, heightUpperLim);
           //std::cerr << "curr = "
           //          << index<float>(heights, width, x, z)
           //          << " min = " << heightMin
