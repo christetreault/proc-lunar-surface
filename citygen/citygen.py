@@ -23,128 +23,40 @@ def in_bounds(x):
         return 0 <= x < size
 
 
-# Generate a heightmap using
-def noise(res=size, lin=100000, exp=1.2):
-    realnoise = 2 * rand(res, res) - 1
-    imagnoise = 2 * rand(res, res) - 1
-    complexnoise = realnoise + imagnoise * 1j
-    dx, dy = meshgrid(linspace(-1, 1, size), linspace(-1, 1, size))
-    dists = dx * dx + dy * dy
-    nf = (lin * dists + 0.1) ** (-exp)
-    complexnoise *= nf
-    m = fft2(complexnoise)
-    m = absolute(m)
-    m -= m.min()
-    m /= m.max()
-    return m
+class NodeIndex(object):
+    def __init__(self):
+        self.node_index = Index()
+        self.node_table = []
 
+    # Get the nearest node and intersection to the given point
+    def get_nearest(self, l, exclude=[]):
+        n, n_i = None, None
+        c = 100
+        while 1:
+            for e in self.node_index.nearest((l.x, l.y, l.x, l.y), c):
+                if self.node_table[e].active == False:
+                    continue
+                if self.node_table[e] not in exclude:
+                    if not n_i and self.node_table[e].is_intersection:
+                        n_i = self.node_table[e]
+                    if not n:
+                        n = self.node_table[e]
+                if n and n_i: return n, n_i
+            c *= 2
 
-height = noise()
+    def intersection_density(self, l):
+        n = 0
+        for i in self.node_index.nearest((l.x, l.y, l.x, l.y), 1000):
+            e = self.node_table[i]
+            if not e.is_intersection: continue
+            if l.distance_to(e.loc) < 40:
+                n += 1
+        return n
 
-
-def smooth(x):
-    x = clip(x, 0, 1)
-    return x * x * x * (x * (x * 6 - 15) + 10)
-
-
-# Find the lowest point on the map and move it into the middle
-
-def center_valley(m):
-    offset = unravel_index(m.argmin(), m.shape)
-    m = roll(m, m.shape[0] / 2 - offset[0], axis=0)
-    m = roll(m, m.shape[1] / 2 - offset[1], axis=1)
-    return m
-
-
-height = center_valley(height)
-
-# Flatten out the low areas
-height = pow(height, 2)
-
-dx, dy = meshgrid(linspace(-1, 1, size), linspace(-1, 1, size))
-dists = dx * dx + dy * dy
-smooth_clamp = smooth(1 - dists)
-
-# Flatten the edges of the heightmap
-height *= smooth_clamp
-
-dx, dy = gradient(height)
-steepness = sqrt(dx * dx + dy * dy)
-
-# Generate a population map
-population = noise(size, exp(20), 1.2)
-
-# Flatten it around the edges too
-population *= smooth_clamp
-
-# Inhibit population in steep areas
-population /= (1 + steepness * size)
-
-# Smooth the map
-population = gaussian_filter(population, 5)
-
-population = pow(population, 2)
-population /= population.max()
-pop_spline = RectBivariateSpline(range(size), range(size), population)
-
-pop_samples = []
-while len(pop_samples) < size:
-    x, y = rand() * size, rand() * size
-    if population[int(y), int(x)] * 2 > rand():
-        pop_samples.append((x, y))
-
-pop_samples = array(pop_samples)
-# Pick some population centers using k-means
-res, idx = kmeans2(pop_samples, 5)
-res = array(filter(in_bounds, list(res)))
-
-# Triangulate the resulting points to get highway edges
-triangles = Delaunay(res)
-
-# Plot the population map, heightmap contour, population samples, and highway edges
-imshow(population.tolist(), origin='lower', cmap='gray', interpolation='none')
-CS = contour(range(size), range(size), height, levels=linspace(0, 1, 15), colors='w')
-cm = get_cmap('gist_rainbow')
-cNorm = Normalize(vmin=0, vmax=len(res) - 1)
-scalarMap = ScalarMappable(norm=cNorm, cmap=cm)
-axis('off')
-scatter(pop_samples[:, 0], pop_samples[:, 1], c=map(scalarMap.to_rgba, idx), s=1, edgecolors='none')
-triplot(res[:, 0], res[:, 1], triangles.simplices, c='y')
-
-# Now generate roads
-
-node_table = []
-node_index = Index()
-
-
-# Get the nearest node and intersection to the given point
-def get_nearest(l, exclude=[]):
-    n, n_i = None, None
-    c = 100
-    while 1:
-        for e in node_index.nearest((l.x, l.y, l.x, l.y), c):
-            if node_table[e] not in exclude:
-                if not n_i and node_table[e].is_intersection:
-                    n_i = node_table[e]
-                if not n:
-                    n = node_table[e]
-            if n and n_i: return n, n_i
-        c *= 2
-
-
-def intersection_density(l):
-    n = 0
-    for i in node_index.nearest((l.x, l.y, l.x, l.y), 1000):
-        e = node_table[i]
-        if not e.is_intersection: continue
-        if l.distance_to(e.loc) < 40:
-            n += 1
-    return n
-
-
-def register_item(o, l):
-    node_index.insert(len(node_table), (l.x, l.y, l.x, l.y))
-    node_table.append(o)
+    def add(self, o):
+        l = o.loc
+        self.node_index.insert(len(self.node_table), (l.x, l.y, l.x, l.y))
+        self.node_table.append(o)
 
 
 class RoadNode(object):
@@ -152,23 +64,50 @@ class RoadNode(object):
 
     def __init__(self, loc):
         self.loc = loc
-        self.segments = []
+        self.segments = set()
+        self.active = True
         self.roads = set()
-        register_item(self, loc)
+        Road.idx.add(self)
 
     @classmethod
-    def build(cls, loc):
-        l = loc.x, loc.y
+    def build(cls, l):
         if l not in cls.nodes:
-            cls.nodes[l] = cls(loc)
+            cls.nodes[l] = cls(l)
+
         return cls.nodes[l]
 
     is_intersection = property(lambda self: len(self.segments) != 2)
+
+    def merge(self, other):
+        self.segments |= other.segments
+        rs = RoadSegment.segs.get((self.loc, other.loc))
+        if rs:
+            rs.delete()
+        for r in other.roads:
+            if other not in r.nodes: continue
+            i = r.nodes.index(other)
+            r.nodes[i] = self
+            self.roads.add(r)
+            r.node_set.remove(other)
+            r.node_set.add(self)
+            if 0 < i < len(r.segs):
+                r.segs[i] = RoadSegment.build(r.nodes[i - 1], r.nodes[i])
+            if i < len(r.segs) - 1:
+                r.segs[i + 1] = RoadSegment.build(r.nodes[i], r.nodes[i + 1])
+
+        other.roads = set()
+        other.active = False
+        RoadNode.nodes.pop(other.loc, 0)
+
+    def nearest_neighbor(self, idx):
+        r, r_i = idx.get_nearest(self.loc, [self])
+        return r
 
 
 class PopulationCenter(RoadNode):
     def __init__(self, loc):
         super(PopulationCenter, self).__init__(loc)
+        self.nodes[loc] = self
 
 
 class RoadSegment(object):
@@ -177,20 +116,28 @@ class RoadSegment(object):
     def __init__(self, a, b):
         self.a, self.b = a, b
         self.roads = set()
-        a.segments.append(self)
-        b.segments.append(self)
+        a.segments.add(self)
+        b.segments.add(self)
 
     def render(self):
         plot([self.a.loc.x, self.b.loc.x], [self.a.loc.y, self.b.loc.y], 'r-', zorder=1)
 
     @classmethod
     def build(cls, a, b):
-        s = cls.segs.get((a, b))
+        # assert a.loc != b.loc
+        s = cls.segs.get((a.loc, b.loc))
         if not s:
             s = cls(a, b)
-            cls.segs[(a, b)] = s
-            cls.segs[(b, a)] = s
+            cls.segs[(a.loc, b.loc)] = s
+            cls.segs[(b.loc, a.loc)] = s
         return s
+
+    def delete(self):
+        if self in self.a.segments: self.a.segments.remove(self)
+        if self in self.b.segments: self.b.segments.remove(self)
+        del self.segs[self.a.loc, self.b.loc]
+        for r in self.roads:
+            r.segs.remove(self)
 
 
 def extend(a, b_loc, p):
@@ -203,13 +150,14 @@ def extend(a, b_loc, p):
     p.segs.append(new_seg)
 
 
-def pop_at_loc(l):
-    if not in_bounds(l): return exp(-10)
-    return pop_spline(l.y, l.x)
+
 
 
 class Road(object):
     roads = []
+    idx = None
+    population = None
+    steepness = None
 
     def __init__(self, a):
         self.nodes = [a]
@@ -222,6 +170,11 @@ class Road(object):
 
     tip = property(lambda self: self.nodes[-1])
     base = property(lambda self: self.nodes[0])
+
+    @classmethod
+    def pop_at_loc(cls, l):
+        if not in_bounds(l): return exp(-10)
+        return cls.population(l.y, l.x)
 
     @property
     def prev_dir(self):
@@ -242,8 +195,8 @@ class Road(object):
         def objective(c):
             c = self.tip.loc + c
             if not in_bounds(c.x) or not in_bounds(c.y): return -9999999
-            s = steepness[c.y % size, c.x % size] * size
-            p = pop_at_loc(c)
+            s = self.steepness[c.y % size, c.x % size] * size
+            p = self.pop_at_loc(c)
             # p = population[c.x, c.y] * size
             dir = (c - self.tip.loc).normalized()
             d = dir.dot(forward)
@@ -257,8 +210,7 @@ class Road(object):
         return self.tip.loc + candidates[i]
 
     def step(self, forward):
-
-        nearest, nearest_intersection = get_nearest(self.tip.loc, self.node_set)
+        nearest, nearest_intersection = self.idx.get_nearest(self.tip.loc, self.node_set)
         dir = (nearest.loc - self.tip.loc).normalized()
         if nearest_intersection and (self.tip.loc + forward).distance_to(nearest_intersection.loc) < 5 and \
                         forward.dot((nearest_intersection.loc - self.tip.loc).normalized()) > 0:
@@ -269,7 +221,7 @@ class Road(object):
             return True
         else:
             extend(self.tip, self.best_candidate(forward), self)
-            if self.tip.loc.distance_to(self.last_offshoot) > 10.00 / pow(pop_at_loc(self.tip.loc), 0.5):
+            if self.tip.loc.distance_to(self.last_offshoot) > 10.00 / pow(self.pop_at_loc(self.tip.loc), 0.5):
                 # and intersection_density(self.tip.loc) < 100\
                 self.offshoots.append(SecondaryRoad(self.tip, self.prev_dir.rotated(90)))
                 self.offshoots.append(SecondaryRoad(self.tip, self.prev_dir.rotated(-90)))
@@ -291,6 +243,21 @@ class Road(object):
             self.nodes.pop(-1)
             self.segs.pop(-1)
 
+    def truncate(self):
+        while len(self.tip.segments) == 1 and len(self.tip.roads) == 1:
+            if len(self.segs) == 0:
+                print "removing road"
+                self.roads.remove(self)
+                return
+            t = self.nodes.pop(-1)
+            s = self.segs.pop(-1)
+            self.node_set.remove(t)
+            s.a.segments.remove(s)
+            s.b.segments.remove(s)
+            # print "truncating", t.loc, s.a.loc, s.b.loc
+            RoadSegment.segs.pop((s.a.loc, s.b.loc), 0)
+            RoadSegment.segs.pop((s.b.loc, s.a.loc), 0)
+            RoadNode.nodes.pop(t.loc, 0)
 
 
 class SecondaryRoad(Road):
@@ -302,7 +269,7 @@ class SecondaryRoad(Road):
         if not self.closed:
             if not self.tip.is_intersection and rand() < 0.3:
                 self.closed = True
-            elif pop_at_loc(self.tip.loc) < 0.2 * rand():
+            elif self.pop_at_loc(self.tip.loc) < 0.2 * rand():
                 self.closed = True
             else:
                 self.closed = super(SecondaryRoad, self).step(self.dir)
@@ -346,46 +313,159 @@ class Highway(object):
         self.a.render()
         self.b.render()
 
-
-pop_centers = [PopulationCenter(Vec2(x, y)) for x, y in res]
-
-for a, b, c in triangles.simplices:
-    Highway(pop_centers[a], pop_centers[b])
-    Highway(pop_centers[b], pop_centers[c])
-    Highway(pop_centers[c], pop_centers[a])
+    def truncate(self):
+        pass
 
 
-def step_all_roads():
-    n_open = 0
+def make_terrain():
+    # Generate a heightmap using spectral synthesis
+    def noise(res=size, lin=100000, exp=1.2):
+        realnoise = 2 * rand(res, res) - 1
+        imagnoise = 2 * rand(res, res) - 1
+        complexnoise = realnoise + imagnoise * 1j
+        dx, dy = meshgrid(linspace(-1, 1, size), linspace(-1, 1, size))
+        dists = dx * dx + dy * dy
+        nf = (lin * dists + 0.1) ** (-exp)
+        complexnoise *= nf
+        m = fft2(complexnoise)
+        m = absolute(m)
+        m -= m.min()
+        m /= m.max()
+        return m
+
+    height = noise()
+
+    def smooth(x):
+        x = clip(x, 0, 1)
+        return x * x * x * (x * (x * 6 - 15) + 10)
+
+    # Find the lowest point on the map and move it into the middle
+
+    def center_valley(m):
+        offset = unravel_index(m.argmin(), m.shape)
+        m = roll(m, m.shape[0] / 2 - offset[0], axis=0)
+        m = roll(m, m.shape[1] / 2 - offset[1], axis=1)
+        return m
+
+    height = center_valley(height)
+
+    # Flatten out the low areas
+    height = pow(height, 2)
+
+    dx, dy = meshgrid(linspace(-1, 1, size), linspace(-1, 1, size))
+    dists = dx * dx + dy * dy
+    smooth_clamp = smooth(1 - dists)
+
+    # Flatten the edges of the heightmap
+    height *= smooth_clamp
+
+    dx, dy = gradient(height)
+    steepness = sqrt(dx * dx + dy * dy)
+
+    # Generate a population map
+    population = noise(size, exp(20), 1.2)
+
+    # Flatten it around the edges too
+    population *= smooth_clamp
+
+    # Inhibit population in steep areas
+    population /= (1 + steepness * size)
+
+    # Smooth the map
+    population = gaussian_filter(population, 5)
+
+    population = pow(population, 2)
+    population /= population.max()
+    pop_spline = RectBivariateSpline(range(size), range(size), population)
+
+    Road.steepness = steepness
+    Road.population = pop_spline
+
+    pop_samples = []
+    while len(pop_samples) < size:
+        x, y = rand() * size, rand() * size
+        if population[int(y), int(x)] * 2 > rand():
+            pop_samples.append((x, y))
+
+    pop_samples = array(pop_samples)
+    # Pick some population centers using k-means
+    res, idx = kmeans2(pop_samples, 5)
+    res = array(filter(in_bounds, list(res)))
+
+    # Triangulate the resulting points to get highway edges
+    triangles = Delaunay(res)
+
+    # Now generate roads and use a new index
+    print "Generating road graph"
+    Road.idx = NodeIndex()
+
+    pop_centers = [PopulationCenter(Vec2(x, y)) for x, y in res]
+    for c in pop_centers:
+        pass
+
+    for a, b, c in triangles.simplices:
+        Highway(pop_centers[a], pop_centers[b])
+        Highway(pop_centers[b], pop_centers[c])
+        Highway(pop_centers[c], pop_centers[a])
+
+    def step_all_roads():
+        n_open = 0
+        for r in Road.roads:
+            if r.closed or r in Highway.highway_roads: continue
+            r.step()
+            n_open += 1
+        print n_open
+        return n_open
+
+    while 1:
+        gap = 0
+
+        # Randomize the step order each time
+        shuffle(Highway.highways)
+        for h in Highway.highways:
+            if not h.step():
+                gap += h.gap_length()
+        print "Gap:", int(gap),
+        if step_all_roads() == 0 and gap == 0: break
+
     for r in Road.roads:
-        if r.closed or r in Highway.highway_roads: continue
-        r.step()
-        n_open += 1
-    print n_open
-    return n_open
+        r.truncate()
 
+    for _ in range(3):
+        print "truncating and smoothing "
+        for r in Road.roads:
+            r.truncate()
+            r.smooth()
 
-while 1:
-    gap = 0
+    while 0:
+        done = 1
+        for node in RoadNode.nodes.values():
+            other = node.nearest_neighbor(idx)
+            if node.loc.distance_to(other.loc) < 3:
+                print "merging", node
+                node.merge(other)
+                done = 0
+                break
+        if done: break
 
-    # Randomize the step order each time
-    shuffle(Highway.highways)
-    for h in Highway.highways:
-        if not h.step():
-            gap += h.gap_length()
-    print "Gap:", int(gap),
-    if step_all_roads() == 0 and gap == 0: break
+    print "done merging"
 
-for _ in range(5):
-    for r in Road.roads:
-        r.smooth()
+    return height, population.tolist(), list(res), list(set(RoadSegment.segs.values()))
 
+height, population, centers, segs = make_terrain()
 intersections = [(node.loc.x, node.loc.y) for node in RoadNode.nodes.values() if node.is_intersection]
 
-for seg in set(RoadSegment.segs.values()):
-    seg.render()
+imshow(population, origin='lower', cmap='gray', interpolation='none')
+CS = contour(range(size), range(size), height, levels=linspace(0, 1, 15), colors='w')
+cm = get_cmap('gist_rainbow')
+cNorm = Normalize(vmin=0, vmax=len(centers) - 1)
+scalarMap = ScalarMappable(norm=cNorm, cmap=cm)
+axis('off')
 
-ix, iy = zip(*intersections)
-scatter(ix, iy, c='w', s=25, zorder=2)
-scatter(res[:, 0], res[:, 1], c=map(scalarMap.to_rgba, range(len(res))), s=25, zorder=3)
+# for seg in segs:
+    # seg.render()
+
+# ix, iy = zip(*intersections)
+# scatter(ix, iy, c='w', s=25, zorder=2)
+# scatter(res[:, 0], res[:, 1], c=map(scalarMap.to_rgba, range(len(res))), s=25, zorder=3)
 show()
