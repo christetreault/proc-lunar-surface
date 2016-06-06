@@ -128,8 +128,10 @@ class RoadSegment(object):
         s = cls.segs.get((a.loc, b.loc))
         if not s:
             s = cls(a, b)
+            s.t = len(cls.segs)
             cls.segs[(a.loc, b.loc)] = s
             cls.segs[(b.loc, a.loc)] = s
+
         return s
 
     def delete(self):
@@ -450,5 +452,5 @@ def make_city():
 
     print "done merging"
 
-    return height, population.tolist(), list(res), list(set(RoadSegment.segs.values()))
+    return height, population.tolist(), list(res), sorted(set(RoadSegment.segs.values()), key = lambda x:x.t)
 

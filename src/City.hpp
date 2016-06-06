@@ -1,9 +1,13 @@
 #ifndef CITY_H
 #define CITY_H
 
+
 #include "SceneGraph.hpp"
 #include "Util.hpp" // RNG
 #include "Landscape.hpp"
+
+#include <glm/glm.hpp>
+#include <GLFW/glfw3.h>
 
 class LandscapeModel;
 
@@ -11,6 +15,7 @@ class RoadNetwork : public Drawable {
 public:
   std::vector<float> roads;
   std::vector<glm::vec3> vertices;
+  std::vector<glm::vec3> quad_vertices;
   std::shared_ptr<LandscapeModel> landscape;
   static std::shared_ptr<Shader> shader;
 
@@ -18,7 +23,10 @@ public:
 
   void draw() {
     glBindVertexArray(VAO);
-    glDrawArrays(GL_LINES, 0, vertices.size());
+    float t = glfwGetTime();
+    int n = t / 5.0 * quad_vertices.size();
+    if (n > quad_vertices.size()) n = quad_vertices.size();
+    glDrawArrays(GL_QUADS, 0, n);
     glBindVertexArray(0);
   }
 private:

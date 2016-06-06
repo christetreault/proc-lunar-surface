@@ -287,6 +287,7 @@ DrawFn getDrawFn (const glm::mat4 & P)
           model->model->unbind();
         }
       else if (typeid(*modelbase) == typeid(RoadNetwork)) {
+        std::cout << "Drawing roads" << std::endl;
         auto model = std::dynamic_pointer_cast<RoadNetwork>(modelbase);
         auto uniformFn = [=](GLuint shaderProg) {
           auto M = modelM;

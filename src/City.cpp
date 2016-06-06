@@ -34,10 +34,12 @@ City::City(unsigned int seed) {
   int width = 512;
 
   vector<float> elevations = read_floats(width * width, "res/terrain/citygen_heightmap");
-  ground = make_shared<LandscapeModel>(elevations, 0, 0.5, 0, width, uvec2(), vector<uvec2>(),
+  ground = make_shared<LandscapeModel>(elevations, 0, 0.15, 0, width, uvec2(), vector<uvec2>(),
                                        std::make_shared<Shader>(groundVertPath, groundFragPath));
 
-  roads = std::make_shared<RoadNetwork>(read_floats(width*width, "res/terrain/citygen_roads"), ground);
+  insert(ground);
+  roads = std::make_shared<RoadNetwork>(read_floats(width * width, "res/terrain/citygen_roads"),
+                                        ground);
   insert(roads);
 }
 
@@ -47,6 +49,7 @@ RoadNetwork::RoadNetwork(std::vector<float> roads, std::shared_ptr<LandscapeMode
     shader = std::make_shared<Shader>("shader/road.vert", "shader/road.frag");
   }
 
+
   cout << roads.size() << endl;
   auto i = roads.begin();
   while (i != roads.end()) {
@@ -54,24 +57,39 @@ RoadNetwork::RoadNetwork(std::vector<float> roads, std::shared_ptr<LandscapeMode
     v.x = *i++;
     v.z = *i++;
 
-    v.y = landscape->elevations[((int) (v.x)) * landscape->width + ((int) (v.z))];
+    v.y = landscape->elevations[((int) (v.z)) * landscape->width + ((int) (v.x))];
 
-    v.y += 0.2;
+    v.y += 0.001;
     v.x *= (1.0 / landscape->width);
     v.z *= (1.0 / landscape->width);
 
+    v.x -= 0.5;
+    v.z -= 0.5;
     vertices.push_back(v);
-    cout << to_string(v) << endl;
+  }
+
+  auto j = vertices.begin();
+  while (j != vertices.end()) {
+    vec3 a = *j++;
+    vec3 b = *j++;
+    vec3 forward = normalize(b - a);
+    vec3 right = normalize(cross(forward, vec3(0, 1, 0)));
+    quad_vertices.push_back(a - right * 0.002f);
+    quad_vertices.push_back(a + right * 0.002f);
+    quad_vertices.push_back(b + right * 0.002f);
+    quad_vertices.push_back(b - right * 0.002f);
   }
 
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
   glBindVertexArray(VAO);
 
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float) * 3, &vertices[0], GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, quad_vertices.size() * sizeof(float) * 3, &quad_vertices[0],
+               GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LandscapeVertex), (GLvoid*) 0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (GLvoid*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBindVertexArray(0);
 }

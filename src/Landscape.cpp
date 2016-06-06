@@ -155,7 +155,7 @@ void LandscapeBuilder::finalize()
                                                                     16.0f)));
   scaledRoot->insert(hmModel);
 
-  auto cityGroundBase = std::make_shared<Transform>(city->ground,
+  auto cityGroundBase = std::make_shared<Transform>(city,
   glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
   scaledRoot->insert(cityGroundBase);
   root->insert(baseScale);
