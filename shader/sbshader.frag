@@ -1,10 +1,10 @@
-#version 330 core
+#version 300 es
 
 uniform samplerCube skybox;
 
 
-in vec3 texCoordsToFrag;
-out vec4 color;
+in mediump vec3 texCoordsToFrag;
+out lowp vec4 color;
 
 void main()
 {

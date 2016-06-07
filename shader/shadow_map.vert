@@ -1,4 +1,4 @@
-#version 330 core
+#version 300 es
 
 // This is an example vertex shader. GLSL is very similar to C.
 // You can define extra functions if needed, and the main() function is

@@ -93,7 +93,7 @@ LandscapeBuilder::LandscapeBuilder(int seed)
                                                 lsShader,
                                                 true);
 
-  city = genCity();
+//  city = genCity();
   currLS = randomLS;
 }
 

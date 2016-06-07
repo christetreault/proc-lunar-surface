@@ -1,31 +1,25 @@
-#version 330 core
+#version 300 es
 
 struct Material
 {
-  vec4 ambient;
-  vec4 diffuse;
-  vec4 specular;
-  float shininess;
+  highp vec4 ambient;
+  highp vec4 diffuse;
+  highp vec4 specular;
+  highp float shininess;
 };
 
-in vec3 normalToFrag;
-in vec3 posToFrag;
-in vec2 texCoordToFrag;
-in float screenspaceZ;
-in float depositValToFrag;
+in highp vec3 normalToFrag;
+in highp vec3 posToFrag;
+in highp vec2 texCoordToFrag;
+in highp float screenspaceZ;
+in highp float depositValToFrag;
 
-uniform sampler2D stoneTex;
-uniform sampler2D gravelTex;
-uniform sampler2D depositTex;
+uniform highp vec4 lightDir;
 
-uniform vec4 lightDir;
-uniform vec3 lightColor;
-
-out vec4 color;
-
+out lowp vec4 color;
 
 void main()
 {
-   float z = abs(screenspaceZ);
+   highp float z = abs(screenspaceZ);
    color = vec4(z,z,z, 1);
 }
