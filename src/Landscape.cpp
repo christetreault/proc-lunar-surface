@@ -48,9 +48,9 @@ void LandscapeBuilder::permuteDoodads()
 
 void LandscapeBuilder::permuteCity()
 {
-  city = genCity();
+  //city = genCity();
 
-  finalize();
+  //finalize();
 }
 
 void LandscapeBuilder::permuteLandscape()
@@ -156,9 +156,9 @@ void LandscapeBuilder::finalize()
                                                                     16.0f)));
   scaledRoot->insert(hmModel);
 
-  auto cityGroundBase = std::make_shared<Transform>(city,
-  glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
-  scaledRoot->insert(cityGroundBase);
+  //auto cityGroundBase = std::make_shared<Transform>(city,
+  //glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
+  //scaledRoot->insert(cityGroundBase);
   root->insert(baseScale);
 
   auto dd1 = doodad1;
@@ -329,20 +329,20 @@ HeightMap::HeightMap(unsigned int inSeed,
   buildSiteCenter = glm::uvec2(offsetX + (bsWidth / 2),
                                offsetY + (bsWidth / 2));
 
-  auto average = (index<float>(elevations, width, offsetX, offsetY)
-                  + index<float>(elevations, width, offsetX + bsWidth, offsetY)
-                  + index<float>(elevations, width, offsetX, offsetY + bsWidth)
-                  + index<float>(elevations, width,
-                                 offsetX + bsWidth, offsetY + bsWidth))
-    / 4.0f;
+  // auto average = (index<float>(elevations, width, offsetX, offsetY)
+  //                 + index<float>(elevations, width, offsetX + bsWidth, offsetY)
+  //                 + index<float>(elevations, width, offsetX, offsetY + bsWidth)
+  //                 + index<float>(elevations, width,
+  //                                offsetX + bsWidth, offsetY + bsWidth))
+  //   / 4.0f;
 
-  for (size_t x = offsetX; x <= offsetX + bsWidth; ++x)
-    {
-      for (size_t y = offsetY; y <= offsetY + bsWidth; ++y)
-        {
-          assign<float>(elevations, width, x, y, average);
-        }
-    }
+  // for (size_t x = offsetX; x <= offsetX + bsWidth; ++x)
+  //   {
+  //     for (size_t y = offsetY; y <= offsetY + bsWidth; ++y)
+  //       {
+  //         assign<float>(elevations, width, x, y, average);
+  //       }
+  //   }
 
   // Center doodads
 
@@ -543,20 +543,20 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
   buildSiteCenter = glm::uvec2(offsetX + (bsWidth / 2),
                                offsetY + (bsWidth / 2));
 
-  auto average = (index<float>(elevations, width, offsetX, offsetY)
-                  + index<float>(elevations, width, offsetX + bsWidth, offsetY)
-                  + index<float>(elevations, width, offsetX, offsetY + bsWidth)
-                  + index<float>(elevations, width,
-                                 offsetX + bsWidth, offsetY + bsWidth))
-    / 4.0f;
+  // auto average = (index<float>(elevations, width, offsetX, offsetY)
+  //                 + index<float>(elevations, width, offsetX + bsWidth, offsetY)
+  //                 + index<float>(elevations, width, offsetX, offsetY + bsWidth)
+  //                 + index<float>(elevations, width,
+  //                                offsetX + bsWidth, offsetY + bsWidth))
+  //   / 4.0f;
 
-  for (size_t x = offsetX; x <= offsetX + bsWidth; ++x)
-    {
-      for (size_t y = offsetY; y <= offsetY + bsWidth; ++y)
-        {
-          assign<float>(elevations, width, x, y, average);
-        }
-    }
+  // for (size_t x = offsetX; x <= offsetX + bsWidth; ++x)
+  //   {
+  //     for (size_t y = offsetY; y <= offsetY + bsWidth; ++y)
+  //       {
+  //         assign<float>(elevations, width, x, y, average);
+  //       }
+  //   }
 
   for (auto & curr : elevations)
     {
