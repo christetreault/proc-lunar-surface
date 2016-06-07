@@ -3,7 +3,7 @@
 bool cameraEngaged;
 bool firstUpdate = true;
 bool frozen = false;
-bool enable_shadow_map = true;
+bool enable_shadow_map = false;
 double atTime = 0.0;
 size_t cameraIdx = 0;
 bool resetCamera = false;
