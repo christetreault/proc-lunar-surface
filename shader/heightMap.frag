@@ -78,8 +78,8 @@ void main()
 
   highp vec3 lsc = lightCoordToFrag.xyz/lightCoordToFrag.w * 0.5 + 0.5;
 
-  highp float z = texture(shadowMapTex, lsc.xy).z;
 
+  highp float z = texture(shadowMapTex, lsc.xy).z;
   bool in_shadow = (z < lsc.z - 0.002);
   if(z == 0.0) in_shadow = false;
 

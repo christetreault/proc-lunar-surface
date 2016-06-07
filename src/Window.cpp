@@ -170,12 +170,9 @@ void Window::display_callback(GLFWwindow* window)
 
   glClear(GL_DEPTH_BUFFER_BIT);
   glClear(GL_COLOR_BUFFER_BIT);
-
-
-
-
+  GLuint depthMapFBO;
   if(enable_shadow_map) {
-    GLuint depthMapFBO;
+
     glGenFramebuffers(1, &depthMapFBO);
 
 
@@ -213,7 +210,7 @@ void Window::display_callback(GLFWwindow* window)
     draw(drawFn, *scene, cameras[cameraIdx], true);
 
     glDeleteTextures(1, &shadow_map);
-
+    glDeleteFramebuffers(1, &depthMapFBO);
   }
 
   // Gets events, including input such as keyboard and mouse or window resizing
