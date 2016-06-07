@@ -2,10 +2,10 @@
 
 struct Material
 {
-  vec4 ambient;
-  vec4 diffuse;
-  vec4 specular;
-  float shininess;
+  highp vec4 ambient;
+  highp vec4 diffuse;
+  highp vec4 specular;
+  highp float shininess;
 };
 
 in highp vec3 normalToFrag;
