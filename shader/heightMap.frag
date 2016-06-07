@@ -11,6 +11,7 @@ struct Material
 in vec3 normalToFrag;
 in vec3 posToFrag;
 in vec2 texCoordToFrag;
+in vec4 lightCoordToFrag;
 in float depositValToFrag;
 
 uniform sampler2D stoneTex;
@@ -29,7 +30,7 @@ float mapRange(float s, float sMin, float sMax,
   return tMin + (((s - sMin) * (tMax - tMin)) / (sMax - sMin));
 }
 
-vec4 lightTexture(vec4 tex, Material mat)
+vec4 lightTexture(vec4 tex, Material mat, bool in_shadow)
 {
   // ambient
   vec4 ambient = vec4(lightColor, 1.0) * mat.ambient;
@@ -55,7 +56,8 @@ vec4 lightTexture(vec4 tex, Material mat)
     }
 
   //if (diffuse == 0.0) return vec4(normal, 1.0);
-  return  tex * (ambient + diffuse + specular);
+  if(in_shadow) return tex*ambient;
+  return tex * (ambient + diffuse + specular);
   //return specular;
 }
 
@@ -74,6 +76,13 @@ void main()
                            vec4(0.927811, 0.826959, 0.826959, 1.0),
                            76.8); // deposit
 
+  vec3 lsc = lightCoordToFrag.xyz/lightCoordToFrag.w * 0.5 + 0.5;
+
+  float z = texture(shadowMapTex, lsc.xy).z;
+
+  bool in_shadow = (z < lsc.z - 0.0002);
+  if(z == 0) in_shadow = false;
+
   vec3 normal = normalize(normalToFrag);
   vec3 straightUp = normalize(vec3(0.0, 1.0, 0.0));
   vec3 straightDown = normalize(vec3(0.0, -1.0, 0.0));
@@ -85,11 +94,11 @@ void main()
   float angle = min(upAngle, downAngle);
 
   vec4 litDeposit = lightTexture(texture(depositTex, texCoordToFrag),
-                                 ruby);
+                                 ruby, in_shadow);
   vec4 litStone = lightTexture(texture(stoneTex, texCoordToFrag),
-                               obsidian);
+                               obsidian, in_shadow);
   vec4 litGravel = lightTexture(texture(gravelTex, texCoordToFrag),
-                                pearl);
+                                pearl, in_shadow);
 
   vec4 selectStoneTex;
   if (depositValToFrag > 0.5)

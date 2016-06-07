@@ -13,12 +13,15 @@ layout (location = 3) in float isDepositToVert;
 uniform mat4 PV;
 uniform mat4 M;
 
+uniform mat4 lightSpace;
+
 uniform vec4 lightDir;
 uniform vec3 lightColor;
 
 out vec3 normalToFrag;
 out vec3 posToFrag;
 out vec2 texCoordToFrag;
+out vec4 lightCoordToFrag;
 out float depositValToFrag;
 
 void main()
@@ -29,6 +32,7 @@ void main()
                                 1.0);
     normalToFrag = mat3(transpose(inverse(M))) * normalToVert;
     posToFrag = (vec3(M * vec4(positionToVert, 1.0f)));
+    lightCoordToFrag = lightSpace * vec4(posToFrag, 1.0);
     texCoordToFrag = texCoordToVert;
     depositValToFrag = isDepositToVert;
 }

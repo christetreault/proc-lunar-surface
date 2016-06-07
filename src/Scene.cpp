@@ -98,7 +98,7 @@ auto lightRotateFn = [](glm::mat4 & rotate, double time)
 
 static std::shared_ptr<Transform> makeLight()
 {
-  auto light = std::make_shared<DirLight>(glm::vec3(0.0f, -10.0f, -25.0f),
+  auto light = std::make_shared<DirLight>(glm::vec3(0.0f, -1.0f, -1.0f),
                                           glm::vec3(1.0f, 0.8f, 0.8f));
   return std::make_shared<Transform>(light,
                                      glm::mat4(),
@@ -117,7 +117,7 @@ std::shared_ptr<Group> getScene(std::shared_ptr<Transform> withCamera)
   return root;
 }
 
-DrawFn getDrawFn (const glm::mat4 & P)
+DrawFn getDrawFn (const glm::mat4 & P_)
 {
   using namespace std;
   using namespace glm;
@@ -136,15 +136,18 @@ DrawFn getDrawFn (const glm::mat4 & P)
       auto modelbase = modelP.first;
       auto modelM = modelP.second;
 
-      glm::mat4 Pnew = P;
       mat4 cameraV;
+      auto P_orth = glm::ortho(-15.0f,15.0f,-15.0f,15.f,-30.f,50.0f);
+      auto lightPos = vec3(lightM * vec4(vec3(light->dir),0));
+      auto lightV = glm::lookAt(-lightPos,
+                                glm::vec3(0,0,0),
+                                glm::vec3(0,1,0) );
+      auto shadowM = P_orth * lightV;
+      auto P = P_;
       if(shadowmap){
-        Pnew = glm::ortho(-15.0f,15.0f,-15.0f,15.f,-30.f,50.0f);
         cameraM = lightM;
-        auto cameraPos = vec3(lightM * vec4(vec3(light->dir),0));
-        cameraV =  glm::lookAt(-cameraPos,
-                              glm::vec3(0,0,0),
-                              glm::vec3(0,1,0) );
+        cameraV = lightV;
+        P = P_orth;
       } else
         cameraV  = camera->getV(cameraM);
 
@@ -184,7 +187,7 @@ DrawFn getDrawFn (const glm::mat4 & P)
           auto uniformFn = [=](GLuint shaderProg)
             {
               auto M = modelM;
-              auto PV = Pnew * cameraV;
+              auto PV = P * cameraV;
               auto lightPosDir = lightM * glm::vec4(light->dir.x,
                                                     light->dir.y,
                                                     light->dir.z,
@@ -197,6 +200,9 @@ DrawFn getDrawFn (const glm::mat4 & P)
 
               GLuint MID = glGetUniformLocation(shaderProg, "M");
               glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
+
+              GLuint LSID = glGetUniformLocation(shaderProg, "lightSpace");
+              glUniformMatrix4fv(LSID, 1, GL_FALSE, &shadowM[0][0]);
 
               // fragment shader uniforms
 
@@ -214,6 +220,8 @@ DrawFn getDrawFn (const glm::mat4 & P)
                         light->color.r,
                         light->color.g,
                         light->color.b);
+
+
 
             };
           std::shared_ptr<Shader> selected_shader = model->shader;

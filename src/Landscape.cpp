@@ -1201,9 +1201,9 @@ void LandscapeModel::draw()
   glActiveTexture(GL_TEXTURE0 + 3);
   glUniform1i(glGetUniformLocation(shader->getId(), "shadowMapTex"), 3);
   glBindTexture(GL_TEXTURE_2D, shadow_map);
-  glDisable(GL_CULL_FACE);
-  glDrawElements(GL_TRIANGLE_STRIP, (GLsizei) indices, GL_UNSIGNED_INT, 0);
+//  glDisable(GL_CULL_FACE);
   glEnable(GL_CULL_FACE);
+  glDrawElements(GL_TRIANGLE_STRIP, (GLsizei) indices, GL_UNSIGNED_INT, 0);
   gravelTex.unbind();
   stoneTex.unbind();
   depositTex.unbind();

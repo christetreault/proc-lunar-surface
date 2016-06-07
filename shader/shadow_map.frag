@@ -26,6 +26,6 @@ out vec4 color;
 
 void main()
 {
-   float z = -screenspaceZ;
+   float z = abs(screenspaceZ);
    color = vec4(z,z,z, 1);
 }
