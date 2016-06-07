@@ -1,6 +1,4 @@
-from matplotlib.cm import ScalarMappable, get_cmap
-from matplotlib.colors import Normalize
-from matplotlib.pyplot import contour, show, imshow, scatter, triplot, plot, axis
+from matplotlib.pyplot import plot
 from numpy import roll, linspace, meshgrid, gradient, sqrt, array, exp, argmax, clip
 from numpy.core.multiarray import unravel_index
 from numpy.fft.fftpack import fft2
@@ -114,23 +112,33 @@ class RoadSegment(object):
     segs = {}
 
     def __init__(self, a, b):
+        if hash(b.loc) < hash(b.loc):
+            a, b = b, a
         self.a, self.b = a, b
         self.roads = set()
+        self.in_cycle = False
         a.segments.add(self)
         b.segments.add(self)
 
-    def render(self):
-        plot([self.a.loc.x, self.b.loc.x], [self.a.loc.y, self.b.loc.y], 'r-', zorder=1)
+    def render(self, color='r-'):
+        plot([self.a.loc.x, self.b.loc.x], [self.a.loc.y, self.b.loc.y], color, zorder=1)
+
+    def other(self, a):
+        if self.a == a: return self.b
+        assert self.b == a
+        return self.a
 
     @classmethod
     def build(cls, a, b):
         # assert a.loc != b.loc
+        if hash(b.loc) < hash(b.loc):
+            a, b = b, a
         s = cls.segs.get((a.loc, b.loc))
         if not s:
             s = cls(a, b)
             s.t = len(cls.segs)
+
             cls.segs[(a.loc, b.loc)] = s
-            cls.segs[(b.loc, a.loc)] = s
 
         return s
 
@@ -141,6 +149,51 @@ class RoadSegment(object):
         for r in self.roads:
             r.segs.remove(self)
 
+    def follow_right(self):
+        path = [self]
+        path_nodes = [self.a, self.b]
+        # while path_nodes[-1] != path_nodes[0]:
+        while path_nodes[-1] not in path_nodes[:-1]:
+            # print path
+            vcurr = path_nodes[-1]
+            l = list(vcurr.segments)
+            if path[-1] not in l or len(l) <= 1:
+                return []
+            l.remove(path[-1])
+            dcurr = path_nodes[-1].loc - path_nodes[-2].loc
+            snext = l.pop(0)
+            vnext = snext.other(vcurr)
+            dnext = vnext.loc - vnext.loc
+            convex = dnext.dot(dcurr.perpendicular()) <= 0
+            if l:
+                f = 0
+                print "deciding between", len(l)
+                for sadj in l:
+                    vadj = sadj.other(vcurr)
+                    dadj = vadj.loc - vcurr.loc
+                    d_angle = dadj.angle - dcurr.angle
+                    d_angle = (d_angle+360)
+                    if convex and (dcurr.dot(dadj.perpendicular()) < 0 or dnext.dot(dadj) < 0):
+                        vnext = vadj
+                        snext = sadj
+                        dnext = dadj
+                        convex = dnext.dot(dcurr.perpendicular()) <= 0
+                    elif (not convex) and (dcurr.dot(dadj.perpendicular()) < 0 and dnext.dot(dadj) < 0):
+                        vnext = vadj
+                        snext = sadj
+                        dnext = dadj
+                        convex = dnext.dot(dcurr.perpendicular()) <= 0
+            else:
+                path.append(snext)
+                path_nodes.append(vnext)
+
+
+            # best = path.pop(0)
+            # best_angle = (best.loc - vcurr.loc).angle
+            # for n in path:
+            #     if (n.loc-vcurr.loc).angle >
+        return path
+
 
 def extend(a, b_loc, p):
     new_node = RoadNode.build(b_loc)
@@ -150,9 +203,6 @@ def extend(a, b_loc, p):
     p.nodes.append(new_node)
     p.node_set.add(new_node)
     p.segs.append(new_seg)
-
-
-
 
 
 class Road(object):
@@ -214,7 +264,7 @@ class Road(object):
     def step(self, forward):
         nearest, nearest_intersection = self.idx.get_nearest(self.tip.loc, self.node_set)
         dir = (nearest.loc - self.tip.loc).normalized()
-        if nearest_intersection and (self.tip.loc + forward).distance_to(nearest_intersection.loc) < 5 and \
+        if nearest_intersection and (self.tip.loc + forward).distance_to(nearest_intersection.loc) < 3 and \
                         forward.dot((nearest_intersection.loc - self.tip.loc).normalized()) > 0:
             extend(self.tip, nearest_intersection.loc, self)
             return True
@@ -361,6 +411,14 @@ def make_city():
     # Flatten the edges of the heightmap
     height *= smooth_clamp
 
+    # edge_clamp = ones((size, size))
+    # for x in range(size):
+    #     for y in range(size):
+    #         if x == 0 or x == size - 1 or y == 0 or y == size - 1:
+    #             edge_clamp[x, y] = 0
+    #
+    # height *= edge_clamp
+
     dx, dy = gradient(height)
     steepness = sqrt(dx * dx + dy * dy)
 
@@ -369,6 +427,8 @@ def make_city():
 
     # Flatten it around the edges too
     population *= smooth_clamp
+
+    # population *= edge_clamp
 
     # Inhibit population in steep areas
     population /= (1 + steepness * size)
@@ -452,5 +512,16 @@ def make_city():
 
     print "done merging"
 
-    return height, population.tolist(), list(res), sorted(set(RoadSegment.segs.values()), key = lambda x:x.t)
+    paths = []
+    for s in RoadSegment.segs.values():
+        if s.in_cycle or not s.b.is_intersection or not s.a.is_intersection: continue
+        p = s.follow_right()
+        if len(p) <= 10: continue
+        print p
+        for s in p:
+            s.in_cycle = True
+        paths.append(p)
+        if len(paths):
+            break
 
+    return height, population.tolist(), list(res), sorted(set(RoadSegment.segs.values()), key=lambda x: x.t), paths
