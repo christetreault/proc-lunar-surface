@@ -4,17 +4,18 @@
 
 void draw(DrawFn drawFn,
           const Group & root,
-          const std::pair<std::shared_ptr<Camera>, glm::mat4> & camera)
+          const std::pair<std::shared_ptr<Camera>, glm::mat4> & camera,
+          bool shadowmap )
 {
-  glClear(GL_DEPTH_BUFFER_BIT);
+
 
   auto lights = getLights(root);
   auto drawables = getDrawables(root);
 
   for (const auto & action : drawables)
-    {
-      drawFn(lights, camera, action);
-    }
+  {
+    drawFn(lights, camera, action, shadowmap);
+  }
 }
 
 std::vector<std::pair<std::shared_ptr<Light>,

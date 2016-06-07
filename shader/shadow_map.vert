@@ -19,16 +19,19 @@ uniform vec3 lightColor;
 out vec3 normalToFrag;
 out vec3 posToFrag;
 out vec2 texCoordToFrag;
+out float screenspaceZ;
 out float depositValToFrag;
 
 void main()
 {
-    gl_Position = PV * M * vec4(positionToVert.x,
-                                positionToVert.y,
-                                positionToVert.z,
-                                1.0);
-    normalToFrag = mat3(transpose(inverse(M))) * normalToVert;
-    posToFrag = (vec3(M * vec4(positionToVert, 1.0f)));
-    texCoordToFrag = texCoordToVert;
-    depositValToFrag = isDepositToVert;
+//    screenspacePos = PV * M * vec4(positionToVert.x,
+//                                    positionToVert.y,
+//                                    positionToVert.z,
+//                                    1.0);
+//    gl_Position = screenspacePos;
+    gl_Position = PV*M*vec4(positionToVert.x,
+                               positionToVert.y,
+                                                  positionToVert.z,
+                                                  1.0);
+    screenspaceZ = -gl_Position.z;
 }

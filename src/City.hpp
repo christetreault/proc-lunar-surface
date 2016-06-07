@@ -24,7 +24,7 @@ public:
   void draw() {
     glBindVertexArray(VAO);
     float t = glfwGetTime();
-    int n = t / 5.0 * quad_vertices.size();
+    int n = t / 10.0 * quad_vertices.size();
     if (n > quad_vertices.size()) n = quad_vertices.size();
     glDrawArrays(GL_QUADS, 0, n);
     glBindVertexArray(0);
@@ -37,7 +37,7 @@ private:
 class City : public Group /* or whatever else sort of Node suits you */
 {
 public:
-  City(unsigned int seed/* TODO: other params */);
+  City(unsigned int seed);
 
   std::shared_ptr<LandscapeModel> ground;
   std::shared_ptr<RoadNetwork> roads;

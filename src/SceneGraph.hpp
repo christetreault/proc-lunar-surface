@@ -29,6 +29,8 @@ public:
 class Light : public Node
 {
 public:
+  GLuint shadow_map;
+  static std::shared_ptr<Shader> shadowmap_shader;
   bool isLight() const {return true;}
 };
 
@@ -36,6 +38,7 @@ public:
 class Camera : public Node
 {
 public:
+
   // Get the View matrix (P in PVM) given an M matrix for this camera
   virtual glm::mat4 getV(const glm::mat4 & M) const = 0;
 
@@ -188,7 +191,8 @@ typedef std::function<void(const std::vector<std::pair<std::shared_ptr<Light>,
                            const std::pair<std::shared_ptr<Camera>,
                            glm::mat4> &,
                            const std::pair<std::shared_ptr<Drawable>,
-                           glm::mat4> &)> DrawFn;
+                           glm::mat4> &,
+                           bool shadowMap)> DrawFn;
 
 // draws the scene. Workflow:
 // 1) call getCameras
@@ -198,7 +202,8 @@ typedef std::function<void(const std::vector<std::pair<std::shared_ptr<Light>,
 // 4) repeat with other cameras as nessesary
 void draw(DrawFn drawFn,
           const Group & root,
-          const std::pair<std::shared_ptr<Camera>, glm::mat4> & camera);
+          const std::pair<std::shared_ptr<Camera>, glm::mat4> & camera,
+          bool);
 
 
 glm::mat4 orbit(glm::vec3 from, glm::vec3 to, float sf);

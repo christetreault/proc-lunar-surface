@@ -8,6 +8,7 @@ class DirLight : public Light
 {
 public:
   DirLight(const glm::vec3 & inDir, const glm::vec3 & inColor);
+
   glm::vec3 color;
   glm::vec3 dir;
 };

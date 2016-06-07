@@ -156,9 +156,9 @@ void LandscapeBuilder::finalize()
                                                                     16.0f)));
   scaledRoot->insert(hmModel);
 
-  auto cityGroundBase = std::make_shared<Transform>(city,
-  glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
-  scaledRoot->insert(cityGroundBase);
+//  auto cityGroundBase = std::make_shared<Transform>(city,
+//  glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
+//  scaledRoot->insert(cityGroundBase);
   root->insert(baseScale);
 
   auto dd1 = doodad1;
@@ -203,7 +203,8 @@ std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
                                           hm.width,
                                           hm.buildSiteCenter,
                                           ddv,
-                                          lsShader);
+                                          lsShader,
+                                          true);
 }
 
 std::shared_ptr<City> LandscapeBuilder::genCity() {
@@ -1186,6 +1187,8 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
   shader = lsShader;
 }
 
+extern GLuint shadow_map;
+
 void LandscapeModel::draw()
 {
   glBindVertexArray(VAO);
@@ -1195,6 +1198,9 @@ void LandscapeModel::draw()
   glUniform1i(glGetUniformLocation(shader->getId(), "gravelTex"), 1);
   depositTex.bind(2);
   glUniform1i(glGetUniformLocation(shader->getId(), "depositTex"), 2);
+  glActiveTexture(GL_TEXTURE0 + 3);
+  glUniform1i(glGetUniformLocation(shader->getId(), "shadowMapTex"), 3);
+  glBindTexture(GL_TEXTURE_2D, shadow_map);
   glDisable(GL_CULL_FACE);
   glDrawElements(GL_TRIANGLE_STRIP, (GLsizei) indices, GL_UNSIGNED_INT, 0);
   glEnable(GL_CULL_FACE);

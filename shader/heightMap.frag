@@ -16,6 +16,7 @@ in float depositValToFrag;
 uniform sampler2D stoneTex;
 uniform sampler2D gravelTex;
 uniform sampler2D depositTex;
+uniform sampler2D shadowMapTex;
 
 uniform vec4 lightDir;
 uniform vec3 lightColor;
@@ -41,7 +42,7 @@ vec4 lightTexture(vec4 tex, Material mat)
   float intensity = max(dot(normal, dir), 0.0);
   vec4 diffuse = intensity * vec4(lightColor, 1.0) * mat.diffuse;
 
-  // specular
+  //  return vec4(vec3(1,0,1)*intensity, 1);
 
   vec4 specular = vec4(0.0);
   if (intensity > 0.0)
@@ -60,7 +61,7 @@ vec4 lightTexture(vec4 tex, Material mat)
 
 void main()
 {
-  Material pearl = Material(vec4(0.55, 0.50725, 0.50725, 1.0),
+  Material pearl = Material(vec4(vec3(0.55, 0.50725, 0.50725)*0.5, 1.0),
                             vec4(1.0, 0.829, 0.829, 1.0),
                             vec4(0.296648, 0.296648, 0.296648, 1.0),
                             11.264 ); // gravel
@@ -122,4 +123,5 @@ void main()
     {
       color = selectStoneTex;
     }
+    //color = texture(shadowMapTex, texCoordToFrag+vec2(0.5,0.5));
 }

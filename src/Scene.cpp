@@ -88,7 +88,7 @@ auto lightRotateFn = [](glm::mat4 & rotate, double time)
   if (time < 0.01) return;
 
   float tCurr = (float) time;
-  float delta = (tCurr - tPrev) / 8.0f;
+  float delta = (tCurr - tPrev) / 1.0f;
 
   rotate = glm::rotate(glm::mat4(),
                        delta,
@@ -98,7 +98,7 @@ auto lightRotateFn = [](glm::mat4 & rotate, double time)
 
 static std::shared_ptr<Transform> makeLight()
 {
-  auto light = std::make_shared<DirLight>(glm::vec3(0.0f, -5.0f, -25.0f),
+  auto light = std::make_shared<DirLight>(glm::vec3(0.0f, -10.0f, -25.0f),
                                           glm::vec3(1.0f, 0.8f, 0.8f));
   return std::make_shared<Transform>(light,
                                      glm::mat4(),
@@ -124,22 +124,38 @@ DrawFn getDrawFn (const glm::mat4 & P)
 
   return [=](const vector<pair<shared_ptr<Light>, mat4> > & lightP,
              const pair<shared_ptr<Camera>, mat4> & cameraP,
-             const pair<shared_ptr<Drawable>, mat4> & modelP)
+             const pair<shared_ptr<Drawable>, mat4> & modelP,
+             bool shadowmap)
     {
       auto light = dynamic_pointer_cast<DirLight>(lightP[0].first);
       auto lightM = lightP[0].second;
+
       auto camera = cameraP.first;
       auto cameraM = cameraP.second;
+
       auto modelbase = modelP.first;
       auto modelM = modelP.second;
 
+      glm::mat4 Pnew = P;
+      mat4 cameraV;
+      if(shadowmap){
+        Pnew = glm::ortho(-15.0f,15.0f,-15.0f,15.f,-30.f,50.0f);
+        cameraM = lightM;
+        auto cameraPos = vec3(lightM * vec4(vec3(light->dir),0));
+        cameraV =  glm::lookAt(-cameraPos,
+                              glm::vec3(0,0,0),
+                              glm::vec3(0,1,0) );
+      } else
+        cameraV  = camera->getV(cameraM);
+
       if (typeid(*modelbase) == typeid(SkyBox)) // my kingdom for
         {                                       // proper ADTs
+          if(shadowmap) return;
           auto model = dynamic_pointer_cast<SkyBox>(modelbase);
           auto uniformFn = [&](GLuint shaderProg)
             {
               auto M = modelM;
-              auto PV = P * (cameraM) * mat4(mat3(camera->getV(cameraM)));
+              auto PV = P * (cameraM) * mat4(mat3(cameraV));
 
               // vertex shader uniforms
 
@@ -168,7 +184,7 @@ DrawFn getDrawFn (const glm::mat4 & P)
           auto uniformFn = [=](GLuint shaderProg)
             {
               auto M = modelM;
-              auto PV = P * camera->getV(cameraM);
+              auto PV = Pnew * cameraV;
               auto lightPosDir = lightM * glm::vec4(light->dir.x,
                                                     light->dir.y,
                                                     light->dir.z,
@@ -195,15 +211,17 @@ DrawFn getDrawFn (const glm::mat4 & P)
             GLuint lightColorID = glGetUniformLocation(shaderProg,
                                                        "lightColor");
             glUniform3f(lightColorID,
-                        light->color.x,
-                        light->color.y,
-                        light->color.z);
+                        light->color.r,
+                        light->color.g,
+                        light->color.b);
 
             };
-
-          model->shader->bind(uniformFn);
+          std::shared_ptr<Shader> selected_shader = model->shader;
+          if(shadowmap)
+            selected_shader = Light::shadowmap_shader;
+          selected_shader->bind(uniformFn);
           model->draw();
-          model->shader->unbind();
+          selected_shader->unbind();
         }
             else if (typeid(*modelbase) == typeid(Segment))
         {
@@ -211,7 +229,7 @@ DrawFn getDrawFn (const glm::mat4 & P)
           auto uniformFn = [=](GLuint shaderProg)
             {
               auto M = modelM;
-              auto V = camera->getV(cameraM);
+              auto V = cameraV;
               auto lightPosDir = lightM * glm::vec4(light->dir.x,
                                                     light->dir.y,
                                                     light->dir.z,
@@ -260,9 +278,12 @@ DrawFn getDrawFn (const glm::mat4 & P)
                                2.0f * glm::pi<float>()));
             };
 
-          model->shader->bind(uniformFn);
+          std::shared_ptr<Shader> selected_shader = model->shader;
+          if(shadowmap)
+            selected_shader = Light::shadowmap_shader;
+          selected_shader->bind(uniformFn);
           model->draw();
-          model->shader->unbind();
+          selected_shader->unbind();
         }
       else if (typeid(*modelbase) == typeid(OBJDrawable))
         {
@@ -272,7 +293,7 @@ DrawFn getDrawFn (const glm::mat4 & P)
 
               auto madeOf = model->material;
               auto M = modelM;
-              auto PV = P * camera->getV(cameraM);
+              auto PV = P * cameraV;
 
               // vertex shader uniforms
 
@@ -287,7 +308,6 @@ DrawFn getDrawFn (const glm::mat4 & P)
           model->model->unbind();
         }
       else if (typeid(*modelbase) == typeid(RoadNetwork)) {
-        std::cout << "Drawing roads" << std::endl;
         auto model = std::dynamic_pointer_cast<RoadNetwork>(modelbase);
         auto uniformFn = [=](GLuint shaderProg) {
           auto M = modelM;

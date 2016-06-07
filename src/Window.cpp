@@ -25,6 +25,8 @@ float currY;
 float prevY;
 float prevZ;
 
+GLuint shadow_map;
+
 int Window::width;
 int Window::height;
 
@@ -50,9 +52,11 @@ auto idleCamFn = [](glm::mat4 & rotate, double time)
   tPrev = tCurr;
 };
 
+
 auto camera = std::make_shared<OrbitalCamera>(glm::vec3(0.0f, 1.0f, 0.0f),
                                               glm::vec3(0.0f, 4.0f, 25.0f));
                                               //glm::vec3(0.0f, 12.0f, 25.0f));
+
 
 auto cameraXform = std::make_shared<Transform>(camera,
                                                glm::mat4(),
@@ -162,7 +166,44 @@ void Window::display_callback(GLFWwindow* window)
 
   auto drawFn = getDrawFn(P);
   auto cameras = getCameras(*scene);
-  draw(drawFn, *scene, cameras[cameraIdx]);
+
+  glClear(GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+
+  GLuint depthMapFBO;
+  glGenFramebuffers(1, &depthMapFBO);
+
+
+  const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+  glGenTextures(1, &shadow_map);
+  glBindTexture(GL_TEXTURE_2D, shadow_map);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+               SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow_map, 0);
+  glDrawBuffer(GL_NONE);
+  glReadBuffer(GL_NONE);
+  assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+  glViewport(0,0,1024, 1024);
+
+  draw(drawFn, *scene, cameras[cameraIdx], true);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  glViewport(0,0,width, height);
+  draw(drawFn, *scene, cameras[cameraIdx], false);
+
+  glViewport(0,0,400, 400);
+  draw(drawFn, *scene, cameras[cameraIdx], true);
+  glDeleteTextures(1, &shadow_map);
 
   // Gets events, including input such as keyboard and mouse or window resizing
   glfwPollEvents();
