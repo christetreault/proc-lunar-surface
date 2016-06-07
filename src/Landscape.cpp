@@ -154,7 +154,7 @@ void LandscapeBuilder::finalize()
                                                           glm::vec3(16.0f,
                                                                     16.0f,
                                                                     16.0f)));
-  scaledRoot->insert(currLS);
+  scaledRoot->insert(hmModel);
 
   auto cityGroundBase = std::make_shared<Transform>(city,
   glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
@@ -204,7 +204,7 @@ std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
                                           hm.buildSiteCenter,
                                           ddv,
                                           lsShader,
-                                          true);
+                                          false);
 }
 
 std::shared_ptr<City> LandscapeBuilder::genCity() {

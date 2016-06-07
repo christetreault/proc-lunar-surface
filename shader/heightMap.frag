@@ -63,7 +63,7 @@ vec4 lightTexture(vec4 tex, Material mat, bool in_shadow)
 
 void main()
 {
-  Material pearl = Material(vec4(vec3(0.55, 0.50725, 0.50725)*0.5, 1.0),
+  Material pearl = Material(vec4(vec3(0.55, 0.50725, 0.50725), 1.0),
                             vec4(1.0, 0.829, 0.829, 1.0),
                             vec4(0.296648, 0.296648, 0.296648, 1.0),
                             11.264 ); // gravel
@@ -80,7 +80,7 @@ void main()
 
   float z = texture(shadowMapTex, lsc.xy).z;
 
-  bool in_shadow = (z < lsc.z - 0.0002);
+  bool in_shadow = (z < lsc.z - 0.002);
   if(z == 0) in_shadow = false;
 
   vec3 normal = normalize(normalToFrag);

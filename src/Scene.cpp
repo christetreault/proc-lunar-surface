@@ -98,7 +98,7 @@ auto lightRotateFn = [](glm::mat4 & rotate, double time)
 
 static std::shared_ptr<Transform> makeLight()
 {
-  auto light = std::make_shared<DirLight>(glm::vec3(0.0f, -1.0f, -1.0f),
+  auto light = std::make_shared<DirLight>(glm::vec3(0.0f, -1.0f, -2.0f),
                                           glm::vec3(1.0f, 0.8f, 0.8f));
   return std::make_shared<Transform>(light,
                                      glm::mat4(),
