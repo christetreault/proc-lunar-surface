@@ -154,11 +154,11 @@ void LandscapeBuilder::finalize()
                                                           glm::vec3(16.0f,
                                                                     16.0f,
                                                                     16.0f)));
-  scaledRoot->insert(hmModel);
+  scaledRoot->insert(currLS);
 
-//  auto cityGroundBase = std::make_shared<Transform>(city,
-//  glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
-//  scaledRoot->insert(cityGroundBase);
+  auto cityGroundBase = std::make_shared<Transform>(city,
+  glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
+  scaledRoot->insert(cityGroundBase);
   root->insert(baseScale);
 
   auto dd1 = doodad1;

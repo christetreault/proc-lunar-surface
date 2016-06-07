@@ -513,15 +513,15 @@ def make_city():
     print "done merging"
 
     paths = []
-    for s in RoadSegment.segs.values():
-        if s.in_cycle or not s.b.is_intersection or not s.a.is_intersection: continue
-        p = s.follow_right()
-        if len(p) <= 10: continue
-        print p
-        for s in p:
-            s.in_cycle = True
-        paths.append(p)
-        if len(paths):
-            break
+    # for s in RoadSegment.segs.values():
+    #     if s.in_cycle or not s.b.is_intersection or not s.a.is_intersection: continue
+    #     p = s.follow_right()
+    #     if len(p) <= 10: continue
+    #     print p
+    #     for s in p:
+    #         s.in_cycle = True
+    #     paths.append(p)
+    #     if len(paths):
+    #         break
 
     return height, population.tolist(), list(res), sorted(set(RoadSegment.segs.values()), key=lambda x: x.t), paths

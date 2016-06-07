@@ -25,17 +25,17 @@ vector<float> read_floats(int len, string filename) {
 }
 
 City::City(unsigned int seed) {
-  Py_Initialize();
-  PySys_SetArgvEx(main_argc, main_argv, 1);
+//  Py_Initialize();
+//  PySys_SetArgvEx(main_argc, main_argv, 1);
   //  FILE* f = fopen("citygen/export.py", "r");
   //    PyRun_SimpleFile(f, "citygen/export.py");
   //  fclose(f);
-  //  cout << "Generating city" << endl;
-  //  PyRun_SimpleString("import os, sys\nprint os.getcwd()\nprint sys.path\nimport citygen.export\n");
-  Py_Finalize();
+//    cout << "Generating city" << endl;
+//    PyRun_SimpleString("import os, sys\nprint os.getcwd()\nprint sys.path\nimport citygen.export\n");
+//  Py_Finalize();
 
   // Welp
-  // system("python citygen/export.py");
+   system("python2 citygen/export.py");
   int width = 512;
 
   vector<float> elevations = read_floats(width * width, "res/terrain/citygen_heightmap");

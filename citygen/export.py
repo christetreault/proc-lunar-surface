@@ -2,7 +2,7 @@ import struct
 
 from citygen import RoadNode, make_city
 
-height, population, centers, segs = make_city()
+height, population, centers, segs, paths = make_city()
 intersections = [(node.loc.x, node.loc.y) for node in RoadNode.nodes.values() if node.is_intersection]
 
 flatten = lambda l: [x for v in l for x in v]

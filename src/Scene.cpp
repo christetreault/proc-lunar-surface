@@ -88,7 +88,7 @@ auto lightRotateFn = [](glm::mat4 & rotate, double time)
   if (time < 0.01) return;
 
   float tCurr = (float) time;
-  float delta = (tCurr - tPrev) / 1.0f;
+  float delta = (tCurr - tPrev) / 8.0f;
 
   rotate = glm::rotate(glm::mat4(),
                        delta,
