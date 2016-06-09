@@ -212,7 +212,6 @@ glm::mat4 OrbitalCamera::getV(const glm::mat4 & M) const
 {
   auto newUp = glm::vec4(up, 0.0f);
   auto newPos = M * (orbit * move) * glm::vec4(pos, 1.0f);
-  //newUp = M * newUp;
 
   return glm::lookAt(glm::vec3(newPos),
                      glm::vec3(0.0f, 0.0f, 0.0f),

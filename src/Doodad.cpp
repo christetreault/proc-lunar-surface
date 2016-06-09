@@ -112,17 +112,6 @@ static glm::vec3 genNormal(std::vector<glm::vec3> & verts,
                            size_t down,
                            size_t right)
 {
-  //std::cerr << "v1: " << glm::to_string(verts[center] - verts[up]) << std::endl;
-  //std::cerr << "v1: " << glm::to_string(verts[center] - verts[left]) << std::endl;
-
-  //std::cerr << "v2: " << glm::to_string(verts[center] - verts[left]) << std::endl;
-  //std::cerr << "v2: " << glm::to_string(verts[center] - verts[down]) << std::endl;
-
-  //std::cerr << "v3: " << glm::to_string(verts[center] - verts[down]) << std::endl;
-  //std::cerr << "v3: " << glm::to_string(verts[center] - verts[right]) << std::endl;
-
-  //std::cerr << "v4: " << glm::to_string(verts[center] - verts[right]) << std::endl;
-  //std::cerr << "v4: " << glm::to_string(verts[center] - verts[up]) << std::endl;
   auto n1 = glm::cross(verts[center] - verts[up],
                        verts[center] - verts[left]);
   auto n2 = glm::cross(verts[center] - verts[left],
@@ -140,14 +129,6 @@ std::shared_ptr<Segment> Segment::getSegment(float length, float topScale,
                                              float bottomLength,
                                              std::shared_ptr<Shader> inShader)
 {
-
-  // SegmentKey key{(int)length,
-  //     (int)topScale,
-  //     (int)bottomScale,
-  //     (int)topLength,
-  //     (int)bottomLength};
-  //static size_t created = 0;
-
   std::ostringstream os;
   os << std::setprecision(2) << length << topScale << bottomScale
      << topLength << bottomLength;
@@ -159,25 +140,13 @@ std::shared_ptr<Segment> Segment::getSegment(float length, float topScale,
     }
   catch (std::out_of_range e)
     {
-      //++created;
-      //std::cerr << "creating segment #: " <<created <<std::endl;
       std::shared_ptr<Segment> curr(new Segment(length,
                                                 topScale,
                                                 bottomScale,
                                                 topLength,
                                                 bottomLength,
                                                 inShader));
-      if (memo.size() > 50)
-        {
-          std::cerr << "size: " << memo.size() << std::endl;
-          std::cerr << "trying to get: {" << length << ", "
-                    << topScale << ", "
-                    << bottomScale << ", "
-                    << topLength << ", "
-                    << bottomLength << "}"
-                    << std::endl;
-        }
-      assert(memo.size() < 200);
+
       memo[key] = curr;
 
       return curr;
@@ -199,8 +168,8 @@ Segment::Segment(float length, float topScale, float bottomScale,
 
   // vertices
 
-  auto base = 0.0f - bottomLength; // TODO: Clips through the floor.
-  auto tip = length + topLength;   // Do I care?
+  auto base = 0.0f - bottomLength;
+  auto tip = length + topLength;
   auto baseCorners = 0.0f;
   auto tipCorners = length;
   auto tipCornersScale = 0.5f * topScale;
@@ -377,12 +346,9 @@ glm::mat4 Segment::getMountPoint(DoodadMount where)
 
   auto trans = glm::translate(glm::mat4(),
                               translate);
-  //auto rotY = glm::rotate(trans,
-  //                        rotate.y,
-  //                        glm::vec3(0.0f, 1.0f, 0.0f));
 
   auto thetaY = (float) atan2(rotate.x, rotate.z);
-  //auto thetaZ = (float) atan2(std::abs(rotate.x), std::abs(rotate.y));
+
   auto thetaX = (float) atan2(std::abs(rotate.y), std::abs(rotate.z));
 
   auto rot1 = glm::rotate(glm::mat4(),
@@ -391,33 +357,9 @@ glm::mat4 Segment::getMountPoint(DoodadMount where)
   auto rot2 = glm::rotate(glm::mat4(),
                           thetaX,
                           glm::vec3(1.0f, 0.0f, 0.0f));
-  //auto rot2 = glm::rotate(rotX,
-  //                        rotate.z,
-  //                        glm::vec3(0.0f, 0.0f, 1.0f));
-
-
 
   return trans * rot1 * rot2;
 
-
-  // TODO: rotate
-
-  /* Option 2: rotation based on (0 - pos)
-
-  rotate = glm::vec3(0.0, 0.0, 0.0) - translate;
-
-  auto trans = glm::translate(glm::mat4(),
-                              translate);
-  auto rotY = glm::rotate(trans,
-                          rotate.y,
-                          glm::vec3(0.0f, 1.0f, 0.0f));
-  auto rotX = glm::rotate(rotY,
-                          rotate.x,
-                          glm::vec3(1.0f, 0.0f, 0.0f));
-
-
-  return rotX;
-  */
 }
 
 // ---------------------------------------------------------
@@ -480,21 +422,9 @@ std::shared_ptr<Grammar> parse(std::string inStr)
     case 'A':
       str = inStr.substr(2, inStr.length() - 2);
       lhs = str.substr(0, str.find(")") + 1);
-      //std::cerr << "LHS = " << lhs << std::endl;
       rhs = str.substr(str.find(")") + 2, str.length());
-      //std::cerr << "RHS = " << rhs << std::endl;
-      //sep = char_separator<char>(";\t\r\n");
-      //tokens = tokenizer<char_separator<char>>(str, sep);
-      //iter = tokens.begin();
-      curr->lhs = parse(lhs);//*iter);
-      //++iter;
-      curr->rhs = parse(rhs);//*iter);
-      //++iter;
-      //if (iter != tokens.end())
-      //  {
-      //    std::cerr << "too many args! s = " << inStr << std::endl;
-      //    assert(false);
-      //  }
+      curr->lhs = parse(lhs);
+      curr->rhs = parse(rhs);
       break;
     default:
       std::cerr << "Invalid ctor: " << curr->ctor;
@@ -588,7 +518,6 @@ std::shared_ptr<Group> eval(std::shared_ptr<Grammar> g,
   std::shared_ptr<Transform> t3 = nullptr;
   std::shared_ptr<Transform> t4 = nullptr;
   std::shared_ptr<Doodad> d1 = nullptr;
-  //std::shared_ptr<Doodad> d2 = nullptr;
 
   if(g->ctor == 'A')
     {

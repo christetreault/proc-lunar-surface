@@ -1,6 +1,7 @@
 #include "SkyBox.hpp"
 
 // From Cube.cpp provided with PA2
+// http://ivl.calit2.net/wiki/index.php/BasecodeCSE167S16
 static GLfloat vertices[] = {
 	// Front vertices
 	-0.5, -0.5,  0.5,
@@ -83,9 +84,9 @@ SkyBox::SkyBox(std::shared_ptr<Shader> inShader,
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
   // The following copied from the Cube.cpp provided with PA2
+  // http://ivl.calit2.net/wiki/index.php/BasecodeCSE167S16
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);

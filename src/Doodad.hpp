@@ -20,58 +20,6 @@ enum class DoodadMount
   center = 0, topRight = 1, topLeft = 2, bottomRight = 3, bottomLeft = 4
 };
 
-typedef struct _SegmentKey
-{
-  int length;
-  int topScale;
-  int bottomScale;
-  int topLength;
-  int bottomLength;
-} SegmentKey;
-
-inline bool operator==(const SegmentKey & lhs,
-                       const SegmentKey & rhs)
-{
-  return (lhs.length == rhs.length)
-    && (lhs.topScale == rhs.topScale)
-    && (lhs.bottomScale == rhs.bottomScale)
-    && (lhs.topLength == rhs.topLength)
-    && (lhs.bottomLength == rhs.bottomLength);
-}
-
-inline bool operator<(const SegmentKey & lhs,
-                      const SegmentKey & rhs)
-{
-  if (lhs == rhs) return false;
-
-  if (lhs.length < rhs.length)
-    {
-      //std::cerr << "lhs.length < rhs.length"<<lhs.length <<"<"<< rhs.length<<std::endl;
-      return true;
-    }
-  else if (lhs.topScale < rhs.topScale)
-    {
-      //std::cerr <<"lhs.topScale < rhs.topScale"<< lhs.topScale <<"<"<< rhs.topScale<<std::endl;
-      return true;
-    }
-  else if (lhs.bottomScale < rhs.bottomScale)
-    {
-      //std::cerr << "lhs.bottomScale == rhs.bottomScale"<<lhs.bottomScale <<"<"<< rhs.bottomScale<<std::endl;
-      return true;
-    }
-  else if (lhs.topLength < rhs.topLength)
-    {
-      //std::cerr << "lhs.topLength == rhs.topLength"<<lhs.topLength <<"<"<< rhs.topLength<<std::endl;
-      return true;
-    }
-  else if (lhs.bottomLength < rhs.bottomLength)
-    {
-      //std::cerr << "lhs.bottomLength == rhs.bottomLength"<<lhs.bottomLength <<"<"<< rhs.bottomLength<<std::endl;
-      return true;
-    }
-  else return false;
-}
-
 class Segment : public Drawable
 {
 public:
@@ -85,9 +33,7 @@ public:
   glm::mat4 getMountPoint(DoodadMount where);
   static void clearMemo()
   {
-    std::cerr << "memo size: " << memo.size() << std::endl;
     memo = std::map<std::string, std::shared_ptr<Segment> >();
-    std::cerr << "memo size: " << memo.size() << std::endl;
   }
 private:
   Segment(float length, float topScale, float bottomScale,
@@ -176,18 +122,12 @@ std::shared_ptr<Group> eval(std::shared_ptr<Grammar> g,
   S = { F(theta), -- fanout in 3 directions
         K(theta), -- fork in 2 directions
         A(r, s) -- for all directions produced by r, do subrule s }
-  ω = { }
-  ω = { }
-  ω = { }
+  ω = { A(C(6,1,1,1,1), D(1.0f, 3.0f, 2.5f, 0.5f, 1.0f)) }
+  ω = { A(C(6,1,1,1,1), A(F(1), S(1))) }
+  ω = { A(S(1), A(K(1), T(3)) }
 
  */
 
-
-
-// D(len, topScale, bottomScale, topLen, bottomLen)
-//    -> A(D(len, topScale, bottomScale, topLen, bottomLen), ?)
-
-// S(scale) -> A(S(scale), ?)
 std::shared_ptr<Transform> scepter(int seed,
                                    float scaleFactor,
                                    std::shared_ptr<Shader> shader,
@@ -196,22 +136,19 @@ std::shared_ptr<Transform> scepter(int seed,
                                    std::shared_ptr<Transform> & p3,
                                    std::shared_ptr<Transform> & p4);
 
-// T(minSegs) -> A(T(minSegs), ?)
 std::shared_ptr<Doodad> angryTentacle(int seed,
                                       size_t minSegs,
                                       std::shared_ptr<Shader> shader,
                                       std::shared_ptr<Doodad> & p1);
 
-// F(theta, r1, r2, r3)
 std::shared_ptr<Group> fanout(int seed,
                               float theta,
                               std::shared_ptr<Transform> & p1,
                               std::shared_ptr<Transform> & p2,
                               std::shared_ptr<Transform> & p3);
-// K(theta, r1, r2, r3)
+
 std::shared_ptr<Group> fork(int seed,
                             float theta,
-                            //std::shared_ptr<Shader> ddShader,
                             std::shared_ptr<Transform> & l,
                             std::shared_ptr<Transform> & r);
 

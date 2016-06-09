@@ -39,6 +39,8 @@ void Shader::unbind()
   curr = nullptr;
 }
 
+// This code is part of the starter code provided on:
+// http://ivl.calit2.net/wiki/index.php/BasecodeCSE167S16
 GLuint Shader::LoadShaders(const char * vertex_file_path,
                            const char * fragment_file_path) const
 {

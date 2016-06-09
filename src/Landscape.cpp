@@ -23,7 +23,6 @@ void LandscapeBuilder::permuteDoodads()
 
   Segment::clearMemo();
 
-
   auto first = seq.next();
   auto second = seq.next();
   auto third = seq.next();
@@ -89,7 +88,6 @@ std::shared_ptr<Transform> LandscapeBuilder::genDoodad1(int seed)
 {
   auto g = baseOne();
   auto g2 = iterate(2,parse(g));
-  std::cerr << "g = " << toString(g2) << std::endl;
   auto dd = eval(g2, seed, ddShader);
 
   auto ddscale = std::make_shared<Transform>(dd,
@@ -104,7 +102,6 @@ std::shared_ptr<Transform> LandscapeBuilder::genDoodad2(int seed)
 {
   auto g = baseTwo();
   auto g2 = iterate(2,parse(g));
-  std::cerr << "g = " << toString(g2) << std::endl;
   auto dd = eval(g2, seed, ddShader);
 
   auto ddscale = std::make_shared<Transform>(dd,
@@ -119,7 +116,6 @@ std::shared_ptr<Transform> LandscapeBuilder::genDoodad3(int seed)
 {
   auto g = baseThree();
   auto g2 = iterate(2,parse(g));
-  std::cerr << "g = " << toString(g2) << std::endl;
   auto dd = eval(g2, seed, ddShader);
 
   auto ddscale = std::make_shared<Transform>(dd,
@@ -194,28 +190,6 @@ std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
 // ---------------------------------------------------------
 // HeightMap -----------------------------------------------
 // ---------------------------------------------------------
-
-static std::function<size_t()> sequenceGen(int seed,
-                                           int min,
-                                           int max)
-{
-  return [=]() // diverges if used too many times. Solveable, but I have
-    {          // other problems...
-      static IntRNG rng(seed, min, max);
-      static std::vector<size_t> placed;
-
-      while (true)
-        {
-          auto curr = rng.next();
-          if (std::find(placed.begin(), placed.end(), curr) == placed.end())
-            {
-              placed.push_back(curr);
-              if ((int) placed.size() >= (max - min)) placed.clear();
-              return curr;
-            }
-        }
-    };
-}
 
 static glm::uvec2 placeZone(size_t xMin, size_t yMin,
                             size_t xMax, size_t yMax, int seed)
@@ -503,7 +477,6 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
 
   doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
                                 offsetY + (bsWidth / 2)));
-
 
   switch (gen.next())
     {
