@@ -3,8 +3,8 @@
 uniform samplerCube skybox;
 
 
-in mediump vec3 texCoordsToFrag;
-out lowp vec4 color;
+in vec3 texCoordsToFrag;
+out vec4 color;
 
 void main()
 {

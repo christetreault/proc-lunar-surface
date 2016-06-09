@@ -1,7 +1,5 @@
 #include "Landscape.hpp"
 
-#include <Python.h>
-
 static const char * vertPath = "shader/heightMap.vert";
 static const char * fragPath = "shader/heightMap.frag";
 
@@ -9,7 +7,6 @@ static const char * stonePath = "res/textures/moonStone.jpg";
 static const char * gravelPath = "res/textures/gravel.jpg";
 static const char * depositPath = "res/textures/iridescent.jpg";
 
-//static const char * terrainPath = "res/terrain/SanDiegoTerrain.tga";
 static const char * terrainPath = "res/terrain/moon.tga";
 
 // ---------------------------------------------------------
@@ -44,13 +41,6 @@ void LandscapeBuilder::permuteDoodads()
    else doodad3 = genDoodad3(seedGen.next());
 
   finalize();
-}
-
-void LandscapeBuilder::permuteCity()
-{
-  //city = genCity();
-
-  //finalize();
 }
 
 void LandscapeBuilder::permuteLandscape()
@@ -88,12 +78,10 @@ LandscapeBuilder::LandscapeBuilder(int seed)
                                                 hm.heightMax,
                                                 seedGen.next(),
                                                 hm.width,
-                                                hm.buildSiteCenter,
                                                 ddv,
                                                 lsShader,
                                                 true);
 
-//  city = genCity();
   currLS = randomLS;
 }
 
@@ -156,9 +144,6 @@ void LandscapeBuilder::finalize()
                                                                     16.0f)));
   scaledRoot->insert(hmModel);
 
-  //auto cityGroundBase = std::make_shared<Transform>(city,
-  //glm::scale(glm::translate(glm::mat4(), glm::vec3(hmModel->buildSite)), glm::vec3(0.25f, 0.25f,0.25f)));
-  //scaledRoot->insert(cityGroundBase);
   root->insert(baseScale);
 
   auto dd1 = doodad1;
@@ -201,19 +186,10 @@ std::shared_ptr<LandscapeModel> LandscapeBuilder::genLandscapeModel()
                                           hm.heightMax,
                                           seedGen.next(),
                                           hm.width,
-                                          hm.buildSiteCenter,
                                           ddv,
                                           lsShader,
                                           false);
 }
-
-std::shared_ptr<City> LandscapeBuilder::genCity() {
-  int seed = seedGen.next();
-
-  return std::make_shared<City>(seed);
-}
-
-
 
 // ---------------------------------------------------------
 // HeightMap -----------------------------------------------
@@ -315,35 +291,6 @@ HeightMap::HeightMap(unsigned int inSeed,
       assert(false);
     }
 
-  //IntRNG offsetRNG(seed, 1, (bsWidth * 2) - 1);
-  //auto offsetX = offsetRNG.next();
-  //auto offsetY = offsetRNG.next();
-  auto cityOffset = placeZone(xMin + 1,
-                              yMin + 1,
-                              xMin + quadrantWidth - bsWidth - 2,
-                              yMin + quadrantWidth - bsWidth - 2,
-                              seedGen.next());
-  auto offsetX = cityOffset.x;
-  auto offsetY = cityOffset.y;
-
-  buildSiteCenter = glm::uvec2(offsetX + (bsWidth / 2),
-                               offsetY + (bsWidth / 2));
-
-  // auto average = (index<float>(elevations, width, offsetX, offsetY)
-  //                 + index<float>(elevations, width, offsetX + bsWidth, offsetY)
-  //                 + index<float>(elevations, width, offsetX, offsetY + bsWidth)
-  //                 + index<float>(elevations, width,
-  //                                offsetX + bsWidth, offsetY + bsWidth))
-  //   / 4.0f;
-
-  // for (size_t x = offsetX; x <= offsetX + bsWidth; ++x)
-  //   {
-  //     for (size_t y = offsetY; y <= offsetY + bsWidth; ++y)
-  //       {
-  //         assign<float>(elevations, width, x, y, average);
-  //       }
-  //   }
-
   // Center doodads
 
   switch (gen.next())
@@ -374,8 +321,8 @@ HeightMap::HeightMap(unsigned int inSeed,
                                 xMin + quadrantWidth - bsWidth - 2,
                                 yMin + quadrantWidth - bsWidth - 2,
                                 seedGen.next());
-  offsetX = doodadOffset.x;
-  offsetY = doodadOffset.y;
+  auto offsetX = doodadOffset.x;
+  auto offsetY = doodadOffset.y;
 
   doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
                                 offsetY + (bsWidth / 2)));
@@ -451,18 +398,6 @@ HeightMap::HeightMap(unsigned int inSeed,
   doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
                                 offsetY + (bsWidth / 2)));
 
-}
-
-HeightMap::HeightMap(const char* raw, int width){
-    float buf[width*width];
-    FILE* f = fopen(raw, "r");
-    if(!f){
-        std::cerr << "Failed to open heightmap " << raw << std::endl;
-        assert(false);
-    }
-    fread(buf, width*width, 4, f);
-    fclose(f);
-    elevations = std::vector<float>(buf, buf+width*width);
 }
 
 HeightMap::HeightMap(unsigned int seed, const char * ppm)
@@ -483,16 +418,12 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
     {
       for (int y = 0; y < iheight; ++y)
         {
-          //std::cerr << "x:y = " << x << ":" << y << std::endl;
           float curr = (float) bytes[y * iwidth + x];
           if (curr > heightMax) heightMax = curr;
           if (curr < heightMin) heightMin = curr;
           elevations.push_back(curr);
-          //std::cerr << "curr: " << (mapRange(curr, 0, 255, 0, 1)) << std::endl;
         }
     }
-
-
 
   SOIL_free_image_data(bytes);
 
@@ -528,35 +459,6 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
       std::cerr << "gen() generated number out of range!" << std::endl;
       assert(false);
     }
-
-  //IntRNG offsetRNG(seed, 1, (bsWidth * 2) - 1);
-  //auto offsetX = offsetRNG.next();
-  //auto offsetY = offsetRNG.next();
-  auto cityOffset = placeZone(xMin + 1,
-                              yMin + 1,
-                              xMin + quadrantWidth - bsWidth - 2,
-                              yMin + quadrantWidth - bsWidth - 2,
-                              seedGen.next());
-  auto offsetX = cityOffset.x;
-  auto offsetY = cityOffset.y;
-
-  buildSiteCenter = glm::uvec2(offsetX + (bsWidth / 2),
-                               offsetY + (bsWidth / 2));
-
-  // auto average = (index<float>(elevations, width, offsetX, offsetY)
-  //                 + index<float>(elevations, width, offsetX + bsWidth, offsetY)
-  //                 + index<float>(elevations, width, offsetX, offsetY + bsWidth)
-  //                 + index<float>(elevations, width,
-  //                                offsetX + bsWidth, offsetY + bsWidth))
-  //   / 4.0f;
-
-  // for (size_t x = offsetX; x <= offsetX + bsWidth; ++x)
-  //   {
-  //     for (size_t y = offsetY; y <= offsetY + bsWidth; ++y)
-  //       {
-  //         assign<float>(elevations, width, x, y, average);
-  //       }
-  //   }
 
   for (auto & curr : elevations)
     {
@@ -596,8 +498,8 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
                                 xMin + quadrantWidth - bsWidth - 2,
                                 yMin + quadrantWidth - bsWidth - 2,
                                 seedGen.next());
-  offsetX = doodadOffset.x;
-  offsetY = doodadOffset.y;
+  auto offsetX = doodadOffset.x;
+  auto offsetY = doodadOffset.y;
 
   doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
                                 offsetY + (bsWidth / 2)));
@@ -625,7 +527,6 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
       std::cerr << "gen() generated number out of range!" << std::endl;
       assert(false);
     }
-
 
   doodadOffset = placeZone(xMin + 1,
                            yMin + 1,
@@ -638,7 +539,6 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
   doodads.push_back( glm::uvec2(offsetX + (bsWidth / 2),
                                 offsetY + (bsWidth / 2)));
 
-
   switch (gen.next())
     {
     case 1:
@@ -661,7 +561,6 @@ HeightMap::HeightMap(unsigned int seed, const char * ppm)
       std::cerr << "gen() generated number out of range!" << std::endl;
       assert(false);
     }
-
 
   doodadOffset = placeZone(xMin + 1,
                            yMin + 1,
@@ -718,20 +617,6 @@ void HeightMap::safeSquareStep(glm::ivec2 target,
   if (val > heightMax) heightMax = val;
   if (val < heightMin) heightMin = val;
 
-  // if (!(val > -20.0f && val < 20.0f))
-  //   {
-  //     std::cerr << "l = " << glm::to_string(l)
-  //               << "u = " << glm::to_string(u)
-  //               << "r = " << glm::to_string(r)
-  //               << "d = " << glm::to_string(d)
-  //               << std::endl;
-  //     std::cerr << "sum = " << sum
-  //               << " denom = " << denom
-  //               << " randVal = " << randVal << std::endl;
-  //     std::cerr << "val = " << val
-  //               << " recalculated = " << (sum / denom) + randVal <<std::endl;
-  //     assert(false);
-  //   }
   assign<float>(elevations, width, target, val);
 }
 
@@ -766,7 +651,7 @@ void HeightMap::diamondSquare(size_t n,
   auto rc = glm::ivec2(tr.x, tr.y + widthNext);
   auto bc = glm::ivec2(tl.x + widthNext, bl.y);
 
-  // These can potentiall be out of range
+  // These can potentially be out of range
   auto dtc = glm::ivec2(tc.x, tc.y - widthNext);
   auto dlc = glm::ivec2(lc.x - widthNext, lc.y);
   auto drc = glm::ivec2(rc.x + widthNext, rc.y);
@@ -787,20 +672,7 @@ void HeightMap::diamondSquare(size_t n,
   assert(tr.x >= 0 && ((size_t) tr.x) < width && tr.y >= 0 && ((size_t) tr.y) < width);
   assert(bl.x >= 0 && ((size_t) bl.x) < width && bl.y >= 0 && ((size_t) bl.y) < width);
   assert(br.x >= 0 && ((size_t) br.x) < width && br.y >= 0 && ((size_t) br.y) < width);
-  if (!(dsRes > -1000.0f && dsRes < 1000.0f))
-    {
-      std::cerr << "dsRes = " << dsRes << std::endl;
-      std::cerr << "tl = " << glm::to_string(tl) << std::endl;
-      std::cerr << "tlVal = " << index<float>(elevations, width, tl) << std::endl;
-      std::cerr << "tr = " << glm::to_string(tr) << std::endl;
-      std::cerr << "trVal = " << index<float>(elevations, width, tr) << std::endl;
-      std::cerr << "bl = " << glm::to_string(bl) << std::endl;
-      std::cerr << "blVal = " << index<float>(elevations, width, bl) << std::endl;
-      std::cerr << "br = " << glm::to_string(br) << std::endl;
-      std::cerr << "brVal = " << index<float>(elevations, width, br) << std::endl;
-      std::cerr << "randVal = " << randVal << std::endl;
-      assert(false);
-    }
+
   assign<float>(elevations, width, center, dsRes);
 
   if (dsRes > heightMax) heightMax = dsRes;
@@ -911,13 +783,11 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
                                float heightMax,
                                unsigned int seed,
                                size_t width,
-                               glm::uvec2 buildSiteCenter,
                                std::vector<glm::uvec2> doodad,
                                std::shared_ptr<Shader> lsShader,
                                bool flatten)
   : stoneTex(stonePath), gravelTex(gravelPath),
-    depositTex(depositPath), VAO(0), VBO(0), EBO(0),
-    width(width)
+    depositTex(depositPath), VAO(0), VBO(0), EBO(0)
 {
   std::vector<glm::vec3> verts;
   std::vector<GLuint> idxs;
@@ -955,36 +825,14 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
           if (xf < minX) minX = xf;
           float yf = mapRange(index<float>(heights, width, x, z) * spacing,
                               heightMin, heightMax, 0.0f, heightUpperLim);
-          //std::cerr << "curr = "
-          //          << index<float>(heights, width, x, z)
-          //          << " min = " << heightMin
-          //          << " max = " << heightMax << std::endl;
           if (yf > maxY) maxY = yf;
           if (yf < minY) minY = yf;
           float zf = (float) z * spacing;
           if (zf > maxZ) maxZ = zf;
           if (zf < minZ) minZ = zf;
 
-          if (!(xf >= 0.0f && xf <= 1.0f))
-            {
-              std::cerr << "x val out of range: " << xf << std::endl;
-            }
-          if (!(yf >= 0.0f && yf <= 25.0f))
-            {
-              std::cerr << "y val out of range: " << yf << std::endl;
-              std::cerr << "original y: " << index<float>(heights, width, x, z) * spacing << std::endl;
-              std::cerr << "y min/max: " << heightMin << "/" << heightMax << std::endl;
-            }
-          if (!(zf >= 0.0f && zf <= 1.0f))
-            {
-              std::cerr << "z val out of range: " << zf << std::endl;
-            }
+           verts.push_back(glm::vec3(xf, yf, zf));
 
-          verts.push_back(glm::vec3(xf, yf, zf));
-          if (x == buildSiteCenter.x && z == buildSiteCenter.y)
-            {
-              buildSite = glm::vec3(xf, yf, zf);
-            }
           if (doodad.size() >= 1 && x == doodad[0].x && z == doodad[0].y)
             {
               doodad1 = glm::vec3(xf, yf, zf);
@@ -1015,22 +863,12 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
   if (diffY > largestDiff) largestDiff = diffY;
   if (diffZ > largestDiff) largestDiff = diffZ;
 
-  // If we're normalizing a landscape without any doodads,
-  // we're working with the citygen heightmap, so don't adjust
-  // the elevation
-  if (doodad.size() == 0) avg.y = 0.001;
-
-
   for (auto & curr : verts)
     {
       curr = (curr - avg) / largestDiff;
-      // TODO: adjust these coordinates so the citygen terrain matches
-      // the surrounding landscape
-      elevations.push_back(curr.y);
       texCoords.push_back(glm::vec2(curr.x, curr.z));
     }
 
-  buildSite = (buildSite - avg) / largestDiff;
   doodad1 = (doodad1 - avg) / largestDiff;
   doodad2 = (doodad2 - avg) / largestDiff;
   doodad3 = (doodad3 - avg) / largestDiff;
@@ -1187,8 +1025,6 @@ LandscapeModel::LandscapeModel(std::vector<float> heights,
   shader = lsShader;
 }
 
-extern GLuint shadow_map;
-
 void LandscapeModel::draw()
 {
   glBindVertexArray(VAO);
@@ -1198,15 +1034,13 @@ void LandscapeModel::draw()
   glUniform1i(glGetUniformLocation(shader->getId(), "gravelTex"), 1);
   depositTex.bind(2);
   glUniform1i(glGetUniformLocation(shader->getId(), "depositTex"), 2);
-  glActiveTexture(GL_TEXTURE0 + 3);
-  glUniform1i(glGetUniformLocation(shader->getId(), "shadowMapTex"), 3);
-  glBindTexture(GL_TEXTURE_2D, shadow_map);
-//  glDisable(GL_CULL_FACE);
-  glEnable(GL_CULL_FACE);
+
+  glDisable(GL_CULL_FACE);
   glDrawElements(GL_TRIANGLE_STRIP, (GLsizei) indices, GL_UNSIGNED_INT, 0);
+  glEnable(GL_CULL_FACE);
+
   gravelTex.unbind();
   stoneTex.unbind();
   depositTex.unbind();
-  //glDrawElements(GL_POINTS, (GLsizei) indices, GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
 }

@@ -15,7 +15,6 @@ std::shared_ptr<Group> getScene(std::shared_ptr<Transform>);
 
 void swapLandscape();
 void permuteDoodads();
-void permuteCity();
 void permuteLandscape();
 
 // returns a DrawFn used by SceneGraph::draw (see SceneGraph.hpp for

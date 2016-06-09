@@ -4,8 +4,7 @@
 
 void draw(DrawFn drawFn,
           const Group & root,
-          const std::pair<std::shared_ptr<Camera>, glm::mat4> & camera,
-          bool shadowmap )
+          const std::pair<std::shared_ptr<Camera>, glm::mat4> & camera)
 {
 
 
@@ -14,7 +13,7 @@ void draw(DrawFn drawFn,
 
   for (const auto & action : drawables)
   {
-    drawFn(lights, camera, action, shadowmap);
+    drawFn(lights, camera, action);
   }
 }
 
@@ -75,19 +74,6 @@ Transform::Transform(std::shared_ptr<Node> what,
                      std::function<void(glm::mat4 &, double)> uFn)
   : xform(with), updateFn(uFn), target(what)
 {}
-
-/*void Group::remove(std::shared_ptr<Node> what)
-{
-  auto iter = children.begin();
-
-  while (iter != children.end())
-    {
-      if (*iter == what)
-        {
-          children.erase(iter);
-        }
-    }
-    }*/
 
 void Group::getLights(const glm::mat4 & inM,
                           std::vector<std::pair<std::shared_ptr<Light>,

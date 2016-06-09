@@ -9,10 +9,10 @@ const char * bottomPath = "res/sky/bkg2_bottom4.png";
 const char * backPath = "res/sky/bkg2_back6.png";
 const char * frontPath = "res/sky/bkg2_front5.png";
 
-const char * vertPath = "shader/shader.vert";
+//const char * vertPath = "shader/shader.vert";
 const char * sbVertPath = "shader/sbshader.vert";
 const char * solidColorVertPath = "shader/solidColor.vert";
-const char * fragPath = "shader/shader.frag";
+//const char * fragPath = "shader/shader.frag";
 const char * sbFragPath = "shader/sbshader.frag";
 const char * solidColorFragPath = "shader/solidColor.frag";
 
@@ -23,13 +23,6 @@ void permuteDoodads()
 {
   lsRoot->clear();
   builder->permuteDoodads();
-  lsRoot->insert(builder->landscape);
-}
-
-void permuteCity()
-{
-  lsRoot->clear();
-  builder->permuteCity();
   lsRoot->insert(builder->landscape);
 }
 
@@ -117,15 +110,14 @@ std::shared_ptr<Group> getScene(std::shared_ptr<Transform> withCamera)
   return root;
 }
 
-DrawFn getDrawFn (const glm::mat4 & P_)
+DrawFn getDrawFn (const glm::mat4 & P)
 {
   using namespace std;
   using namespace glm;
 
   return [=](const vector<pair<shared_ptr<Light>, mat4> > & lightP,
              const pair<shared_ptr<Camera>, mat4> & cameraP,
-             const pair<shared_ptr<Drawable>, mat4> & modelP,
-             bool shadowmap)
+             const pair<shared_ptr<Drawable>, mat4> & modelP)
     {
       auto light = dynamic_pointer_cast<DirLight>(lightP[0].first);
       auto lightM = lightP[0].second;
@@ -137,23 +129,11 @@ DrawFn getDrawFn (const glm::mat4 & P_)
       auto modelM = modelP.second;
 
       mat4 cameraV;
-      auto P_orth = glm::ortho(-15.0f,15.0f,-15.0f,15.f,-30.f,50.0f);
-      auto lightPos = vec3(lightM * vec4(vec3(light->dir),0));
-      auto lightV = glm::lookAt(-lightPos,
-                                glm::vec3(0,0,0),
-                                glm::vec3(0,1,0) );
-      auto shadowM = P_orth * lightV;
-      auto P = P_;
-      if(shadowmap){
-        cameraM = lightM;
-        cameraV = lightV;
-        P = P_orth;
-      } else
-        cameraV  = camera->getV(cameraM);
+
+      cameraV  = camera->getV(cameraM);
 
       if (typeid(*modelbase) == typeid(SkyBox)) // my kingdom for
         {                                       // proper ADTs
-          if(shadowmap) return;
           auto model = dynamic_pointer_cast<SkyBox>(modelbase);
           auto uniformFn = [&](GLuint shaderProg)
             {
@@ -201,9 +181,6 @@ DrawFn getDrawFn (const glm::mat4 & P_)
               GLuint MID = glGetUniformLocation(shaderProg, "M");
               glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
 
-              GLuint LSID = glGetUniformLocation(shaderProg, "lightSpace");
-              glUniformMatrix4fv(LSID, 1, GL_FALSE, &shadowM[0][0]);
-
               // fragment shader uniforms
 
             GLuint lightPosDirID = glGetUniformLocation(shaderProg,
@@ -224,12 +201,9 @@ DrawFn getDrawFn (const glm::mat4 & P_)
 
 
             };
-          std::shared_ptr<Shader> selected_shader = model->shader;
-          if(shadowmap)
-            selected_shader = Light::shadowmap_shader;
-          selected_shader->bind(uniformFn);
+          model->shader->bind(uniformFn);
           model->draw();
-          selected_shader->unbind();
+          model->shader->unbind();
         }
             else if (typeid(*modelbase) == typeid(Segment))
         {
@@ -286,12 +260,9 @@ DrawFn getDrawFn (const glm::mat4 & P_)
                                2.0f * glm::pi<float>()));
             };
 
-          std::shared_ptr<Shader> selected_shader = model->shader;
-          if(shadowmap)
-            selected_shader = Light::shadowmap_shader;
-          selected_shader->bind(uniformFn);
+          model->shader->bind(uniformFn);
           model->draw();
-          selected_shader->unbind();
+          model->shader->unbind();
         }
       else if (typeid(*modelbase) == typeid(OBJDrawable))
         {
@@ -315,23 +286,5 @@ DrawFn getDrawFn (const glm::mat4 & P_)
           model->shader->unbind();
           model->model->unbind();
         }
-      else if (typeid(*modelbase) == typeid(RoadNetwork)) {
-        auto model = std::dynamic_pointer_cast<RoadNetwork>(modelbase);
-        auto uniformFn = [=](GLuint shaderProg) {
-          auto M = modelM;
-          auto PV = P * camera->getV(cameraM);
-
-          // vertex shader uniforms
-
-          GLuint PVID = glGetUniformLocation(shaderProg, "PV");
-          glUniformMatrix4fv(PVID, 1, GL_FALSE, &PV[0][0]);
-
-          GLuint MID = glGetUniformLocation(shaderProg, "M");
-          glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
-        };
-        RoadNetwork::shader->bind(uniformFn);
-        model->draw();
-        RoadNetwork::shader->unbind();
-      }
     };
 }

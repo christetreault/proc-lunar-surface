@@ -191,8 +191,7 @@ typedef std::function<void(const std::vector<std::pair<std::shared_ptr<Light>,
                            const std::pair<std::shared_ptr<Camera>,
                            glm::mat4> &,
                            const std::pair<std::shared_ptr<Drawable>,
-                           glm::mat4> &,
-                           bool shadowMap)> DrawFn;
+                           glm::mat4> &)> DrawFn;
 
 // draws the scene. Workflow:
 // 1) call getCameras
@@ -202,8 +201,7 @@ typedef std::function<void(const std::vector<std::pair<std::shared_ptr<Light>,
 // 4) repeat with other cameras as nessesary
 void draw(DrawFn drawFn,
           const Group & root,
-          const std::pair<std::shared_ptr<Camera>, glm::mat4> & camera,
-          bool);
+          const std::pair<std::shared_ptr<Camera>, glm::mat4> & camera);
 
 
 glm::mat4 orbit(glm::vec3 from, glm::vec3 to, float sf);
