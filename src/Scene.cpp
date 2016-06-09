@@ -9,10 +9,8 @@ const char * bottomPath = "res/sky/bkg2_bottom4.png";
 const char * backPath = "res/sky/bkg2_back6.png";
 const char * frontPath = "res/sky/bkg2_front5.png";
 
-//const char * vertPath = "shader/shader.vert";
 const char * sbVertPath = "shader/sbshader.vert";
 const char * solidColorVertPath = "shader/solidColor.vert";
-//const char * fragPath = "shader/shader.frag";
 const char * sbFragPath = "shader/sbshader.frag";
 const char * solidColorFragPath = "shader/solidColor.frag";
 

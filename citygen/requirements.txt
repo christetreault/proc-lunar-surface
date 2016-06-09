@@ -1,4 +1,0 @@
-numpy
-planar
-rtree
-scipy
